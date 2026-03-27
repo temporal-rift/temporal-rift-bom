@@ -62,6 +62,8 @@
 
     <!-- Temporal Rift -->
     <domain-events.version>1.0.0</domain-events.version>
+    <!-- Build tools/artifacts version (do NOT use ${project.version} here) -->
+    <build-tools.version>1.0.0</build-tools.version>
 
     <!-- Third-party -->
     <swagger-annotations.version>2.2.43</swagger-annotations.version>
@@ -122,7 +124,7 @@
             <dependency>
               <groupId>com.temporalrift</groupId>
               <artifactId>temporal-rift-build-tools</artifactId>
-              <version>${project.version}</version>
+                <version>${build-tools.version}</version>
             </dependency>
           </dependencies>
         </plugin>
