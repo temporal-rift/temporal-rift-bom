@@ -13,7 +13,7 @@
 
   <groupId>com.temporalrift</groupId>
   <artifactId>temporal-rift-bom</artifactId>
-  <version>1.0.0</version>
+  <version>1.0.1</version>
   <packaging>pom</packaging>
 
   <name>Temporal Rift BOM</name>
@@ -289,6 +289,32 @@
   <profiles>
     <profile>
       <id>ghrepo</id>
+      <repositories>
+        <repository>
+          <id>github</id>
+          <name>Temporal Rift GitHub Packages</name>
+          <url>https://maven.pkg.github.com/temporal-rift/temporal-rift-bom</url>
+          <releases>
+            <enabled>true</enabled>
+          </releases>
+          <snapshots>
+            <enabled>false</enabled>
+          </snapshots>
+        </repository>
+      </repositories>
+      <pluginRepositories>
+        <pluginRepository>
+          <id>github</id>
+          <name>Temporal Rift GitHub Packages</name>
+          <url>https://maven.pkg.github.com/temporal-rift/temporal-rift-bom</url>
+          <releases>
+            <enabled>true</enabled>
+          </releases>
+          <snapshots>
+            <enabled>false</enabled>
+          </snapshots>
+        </pluginRepository>
+      </pluginRepositories>
       <build>
         <plugins>
           <plugin>
