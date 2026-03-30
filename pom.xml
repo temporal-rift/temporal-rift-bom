@@ -13,7 +13,7 @@
 
   <groupId>com.temporalrift</groupId>
   <artifactId>temporal-rift-bom</artifactId>
-  <version>1.0.1</version>
+  <version>1.0.3</version>
   <packaging>pom</packaging>
 
   <name>Temporal Rift BOM</name>
@@ -166,11 +166,14 @@
           <version>${openapi-generator-plugin.version}</version>
           <configuration>
             <generatorName>spring</generatorName>
+            <generateApiTests>false</generateApiTests>
+            <generateModelTests>false</generateModelTests>
+            <generateSupportingFiles>false</generateSupportingFiles>
             <configOptions>
               <openApiNullable>false</openApiNullable>
               <performBeanValidation>true</performBeanValidation>
               <library>spring-boot</library>
-              <useSpringBoot3>true</useSpringBoot3>
+              <useSpringBoot4>true</useSpringBoot4>
               <reactive>false</reactive>
               <interfaceOnly>true</interfaceOnly>
               <dateLibrary>java8</dateLibrary>
@@ -255,7 +258,7 @@
             </importOrder>
             <replaceRegex>
               <name>Remove wildcard imports</name>
-              <searchRegex>import\s+(?:static\s+)?[^\*\s]+\*;(\r\n|\r|\n)</searchRegex>
+              <searchRegex>import\s+(?!static\s)[^\*\s]+\*;(\r\n|\r|\n)</searchRegex>
               <replacement>$1</replacement>
             </replaceRegex>
             <removeUnusedImports/>
@@ -291,28 +294,20 @@
       <id>ghrepo</id>
       <repositories>
         <repository>
-          <id>github</id>
+          <id>github-temporal-rift-bom</id>
           <name>Temporal Rift GitHub Packages</name>
           <url>https://maven.pkg.github.com/temporal-rift/temporal-rift-bom</url>
-          <releases>
-            <enabled>true</enabled>
-          </releases>
-          <snapshots>
-            <enabled>false</enabled>
-          </snapshots>
+          <releases><enabled>true</enabled></releases>
+          <snapshots><enabled>false</enabled></snapshots>
         </repository>
       </repositories>
       <pluginRepositories>
         <pluginRepository>
-          <id>github</id>
+          <id>github-temporal-rift-bom</id>
           <name>Temporal Rift GitHub Packages</name>
           <url>https://maven.pkg.github.com/temporal-rift/temporal-rift-bom</url>
-          <releases>
-            <enabled>true</enabled>
-          </releases>
-          <snapshots>
-            <enabled>false</enabled>
-          </snapshots>
+          <releases><enabled>true</enabled></releases>
+          <snapshots><enabled>false</enabled></snapshots>
         </pluginRepository>
       </pluginRepositories>
       <build>
@@ -333,7 +328,7 @@
       </build>
       <distributionManagement>
         <repository>
-          <id>github</id>
+          <id>github-temporal-rift-bom</id>
           <name>Temporal Rift GitHub Packages</name>
           <url>https://maven.pkg.github.com/temporal-rift/temporal-rift-bom</url>
         </repository>
