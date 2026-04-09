@@ -1,0 +1,59 @@
+name: Publish BOM
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Setup Maven Action
+        uses: s4u/setup-maven-action@v1.19.0
+        with:
+          java-version: 25
+          java-distribution: temurin
+          maven-version: 3.9.13
+
+      - name: Check if version already published
+        id: version_check
+        run: |
+          VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" -L \
+          -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+          "https://maven.pkg.github.com/temporal-rift/temporal-rift-bom/com/temporalrift/temporal-rift-bom/$VERSION/temporal-rift-bom-$VERSION.pom")
+
+          echo "HTTP Status: $STATUS"
+          echo "VERSION_CHANGED=$( [ "$STATUS" = "200" ] && echo false || echo true )" >> $GITHUB_ENV
+
+      - name: Publish build-tools to GitHub Packages
+        if: env.VERSION_CHANGED == 'true'
+        run: mvn --batch-mode -f build-tools/pom.xml deploy -Pghrepo
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish BOM to GitHub Packages
+        if: env.VERSION_CHANGED == 'true'
+        run: mvn --batch-mode deploy -Pghrepo -Denforcer.skip=true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create and push tag
+        if: env.VERSION_CHANGED == 'true'
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git tag v$VERSION
+          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/temporal-rift/temporal-rift-bom.git v$VERSION
+
