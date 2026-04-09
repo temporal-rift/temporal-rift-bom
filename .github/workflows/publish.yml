@@ -37,8 +37,17 @@ jobs:
           echo "HTTP Status: $STATUS"
           echo "VERSION_CHANGED=$( [ "$STATUS" = "200" ] && echo false || echo true )" >> $GITHUB_ENV
 
+          BUILD_TOOLS_VERSION=$(mvn help:evaluate -f build-tools/pom.xml -Dexpression=project.version -q -DforceStdout)
+          echo "BUILD_TOOLS_VERSION=$BUILD_TOOLS_VERSION" >> $GITHUB_ENV
+
+          BT_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -L \
+          -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+          "https://maven.pkg.github.com/temporal-rift/temporal-rift-bom/com/temporalrift/temporal-rift-build-tools/$BUILD_TOOLS_VERSION/temporal-rift-build-tools-$BUILD_TOOLS_VERSION.pom")
+
+          echo "BUILD_TOOLS_CHANGED=$( [ "$BT_STATUS" = "200" ] && echo false || echo true )" >> $GITHUB_ENV
+
       - name: Publish build-tools to GitHub Packages
-        if: env.VERSION_CHANGED == 'true'
+        if: env.BUILD_TOOLS_CHANGED == 'true'
         run: mvn --batch-mode -f build-tools/pom.xml deploy -Pghrepo
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
