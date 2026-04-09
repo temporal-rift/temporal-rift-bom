@@ -13,7 +13,7 @@
 
   <groupId>com.temporalrift</groupId>
   <artifactId>temporal-rift-bom</artifactId>
-  <version>1.0.4</version>
+  <version>1.0.5</version>
   <packaging>pom</packaging>
 
   <name>Temporal Rift BOM</name>
@@ -63,7 +63,7 @@
     <!-- Temporal Rift -->
     <domain-events.version>1.0.0</domain-events.version>
     <!-- Build tools/artifacts version (do NOT use ${project.version} here) -->
-    <build-tools.version>1.0.0</build-tools.version>
+    <build-tools.version>1.0.1</build-tools.version>
 
     <!-- Third-party -->
     <mapstruct.version>1.6.3</mapstruct.version>
@@ -150,7 +150,7 @@
             <dependency>
               <groupId>com.temporalrift</groupId>
               <artifactId>temporal-rift-build-tools</artifactId>
-                <version>${build-tools.version}</version>
+              <version>${build-tools.version}</version>
             </dependency>
           </dependencies>
         </plugin>
@@ -323,8 +323,12 @@
           <id>github-temporal-rift-bom</id>
           <name>Temporal Rift GitHub Packages</name>
           <url>https://maven.pkg.github.com/temporal-rift/temporal-rift-bom</url>
-          <releases><enabled>true</enabled></releases>
-          <snapshots><enabled>false</enabled></snapshots>
+          <releases>
+            <enabled>true</enabled>
+          </releases>
+          <snapshots>
+            <enabled>false</enabled>
+          </snapshots>
         </repository>
       </repositories>
       <pluginRepositories>
@@ -332,8 +336,12 @@
           <id>github-temporal-rift-bom</id>
           <name>Temporal Rift GitHub Packages</name>
           <url>https://maven.pkg.github.com/temporal-rift/temporal-rift-bom</url>
-          <releases><enabled>true</enabled></releases>
-          <snapshots><enabled>false</enabled></snapshots>
+          <releases>
+            <enabled>true</enabled>
+          </releases>
+          <snapshots>
+            <enabled>false</enabled>
+          </snapshots>
         </pluginRepository>
       </pluginRepositories>
       <build>
