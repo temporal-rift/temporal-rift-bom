@@ -23,6 +23,7 @@ jobs:
           java-version: 25
           java-distribution: temurin
           maven-version: 3.9.13
+          settings-servers: '[{"id":"github-temporal-rift-bom","username":"${{ github.actor }}","password":"${{ secrets.GITHUB_TOKEN }}"}]'
 
       - name: Check if version already published
         id: version_check
