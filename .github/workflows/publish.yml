@@ -10,7 +10,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      packages: write
 
     steps:
       - uses: actions/checkout@v4
@@ -18,12 +17,25 @@ jobs:
           fetch-depth: 2
 
       - name: Setup Maven Action
-        uses: s4u/setup-maven-action@v1.19.0
+        uses: s4u/setup-maven-action@v1.20.0
         with:
           java-version: 25
           java-distribution: temurin
           maven-version: 3.9.13
-          settings-servers: '[{"id":"github-temporal-rift-bom","username":"${{ github.actor }}","password":"${{ secrets.GITHUB_TOKEN }}"}]'
+          settings-servers: |
+            [
+              {
+                "id": "central",
+                "username": "${{ secrets.SONATYPE_USERNAME }}",
+                "password": "${{ secrets.SONATYPE_PASSWORD }}"
+              }
+            ]
+
+      - name: Import GPG key
+        uses: crazy-max/ghaction-import-gpg@v6
+        with:
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.GPG_PASSPHRASE }}
 
       - name: Check if version already published
         id: version_check
@@ -32,32 +44,25 @@ jobs:
           echo "VERSION=$VERSION" >> $GITHUB_ENV
 
           STATUS=$(curl -s -o /dev/null -w "%{http_code}" -L \
-          -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-          "https://maven.pkg.github.com/temporal-rift/temporal-rift-bom/com/temporalrift/temporal-rift-bom/$VERSION/temporal-rift-bom-$VERSION.pom")
-
-          echo "HTTP Status: $STATUS"
+            "https://repo1.maven.org/maven2/com/temporalrift/temporal-rift-bom/$VERSION/temporal-rift-bom-$VERSION.pom")
+          echo "BOM HTTP Status: $STATUS"
           echo "VERSION_CHANGED=$( [ "$STATUS" = "200" ] && echo false || echo true )" >> $GITHUB_ENV
 
           BUILD_TOOLS_VERSION=$(mvn help:evaluate -f build-tools/pom.xml -Dexpression=project.version -q -DforceStdout)
           echo "BUILD_TOOLS_VERSION=$BUILD_TOOLS_VERSION" >> $GITHUB_ENV
 
           BT_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -L \
-          -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-          "https://maven.pkg.github.com/temporal-rift/temporal-rift-bom/com/temporalrift/temporal-rift-build-tools/$BUILD_TOOLS_VERSION/temporal-rift-build-tools-$BUILD_TOOLS_VERSION.pom")
-
+            "https://repo1.maven.org/maven2/com/temporalrift/temporal-rift-build-tools/$BUILD_TOOLS_VERSION/temporal-rift-build-tools-$BUILD_TOOLS_VERSION.pom")
+          echo "build-tools HTTP Status: $BT_STATUS"
           echo "BUILD_TOOLS_CHANGED=$( [ "$BT_STATUS" = "200" ] && echo false || echo true )" >> $GITHUB_ENV
 
-      - name: Publish build-tools to GitHub Packages
+      - name: Publish build-tools to Maven Central
         if: env.BUILD_TOOLS_CHANGED == 'true'
-        run: mvn --batch-mode -f build-tools/pom.xml deploy -Pghrepo
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: mvn --batch-mode -f build-tools/pom.xml deploy -Pcentral
 
-      - name: Publish BOM to GitHub Packages
+      - name: Publish BOM to Maven Central
         if: env.VERSION_CHANGED == 'true'
-        run: mvn --batch-mode deploy -Pghrepo -Denforcer.skip=true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: mvn --batch-mode deploy -Pcentral -Denforcer.skip=true
 
       - name: Create and push tag
         if: env.VERSION_CHANGED == 'true'
@@ -66,4 +71,3 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git tag v$VERSION
           git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/temporal-rift/temporal-rift-bom.git v$VERSION
-

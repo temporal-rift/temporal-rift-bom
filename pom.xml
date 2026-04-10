@@ -47,6 +47,8 @@
     </developer>
   </developers>
 
+  <url>https://github.com/temporal-rift/temporal-rift-bom</url>
+
   <scm>
     <connection>scm:git:git@github.com:temporal-rift/temporal-rift-bom.git</connection>
     <developerConnection>scm:git:git@github.com:temporal-rift/temporal-rift-bom.git</developerConnection>
@@ -61,7 +63,7 @@
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
     <!-- Temporal Rift -->
-    <domain-events.version>1.0.0</domain-events.version>
+    <domain-events.version>1.0.1</domain-events.version>
     <!-- Build tools/artifacts version (do NOT use ${project.version} here) -->
     <build-tools.version>1.0.1</build-tools.version>
 
@@ -78,6 +80,8 @@
     <maven-compiler-plugin.version>3.15.0</maven-compiler-plugin.version>
     <maven-source-plugin.version>3.4.0</maven-source-plugin.version>
     <maven-javadoc-plugin.version>3.12.0</maven-javadoc-plugin.version>
+    <maven-gpg-plugin.version>3.2.8</maven-gpg-plugin.version>
+    <central-publishing-maven-plugin.version>0.9.0</central-publishing-maven-plugin.version>
     <jacoco-maven-plugin.version>0.8.14</jacoco-maven-plugin.version>
     <openapi-generator-plugin.version>7.20.0</openapi-generator-plugin.version>
   </properties>
@@ -112,7 +116,6 @@
   <build>
     <pluginManagement>
       <plugins>
-
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-compiler-plugin</artifactId>
@@ -225,6 +228,18 @@
           </configuration>
         </plugin>
 
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-gpg-plugin</artifactId>
+          <version>${maven-gpg-plugin.version}</version>
+        </plugin>
+
+        <plugin>
+          <groupId>org.sonatype.central</groupId>
+          <artifactId>central-publishing-maven-plugin</artifactId>
+          <version>${central-publishing-maven-plugin.version}</version>
+        </plugin>
+
       </plugins>
     </pluginManagement>
 
@@ -317,35 +332,18 @@
 
   <profiles>
     <profile>
-      <id>ghrepo</id>
-      <repositories>
-        <repository>
-          <id>github-temporal-rift-bom</id>
-          <name>Temporal Rift GitHub Packages</name>
-          <url>https://maven.pkg.github.com/temporal-rift/temporal-rift-bom</url>
-          <releases>
-            <enabled>true</enabled>
-          </releases>
-          <snapshots>
-            <enabled>false</enabled>
-          </snapshots>
-        </repository>
-      </repositories>
-      <pluginRepositories>
-        <pluginRepository>
-          <id>github-temporal-rift-bom</id>
-          <name>Temporal Rift GitHub Packages</name>
-          <url>https://maven.pkg.github.com/temporal-rift/temporal-rift-bom</url>
-          <releases>
-            <enabled>true</enabled>
-          </releases>
-          <snapshots>
-            <enabled>false</enabled>
-          </snapshots>
-        </pluginRepository>
-      </pluginRepositories>
+      <id>central</id>
       <build>
         <plugins>
+          <plugin>
+            <groupId>org.sonatype.central</groupId>
+            <artifactId>central-publishing-maven-plugin</artifactId>
+            <extensions>true</extensions>
+            <configuration>
+              <publishingServerId>central</publishingServerId>
+              <autoPublish>true</autoPublish>
+            </configuration>
+          </plugin>
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-source-plugin</artifactId>
@@ -358,15 +356,39 @@
               </execution>
             </executions>
           </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-javadoc-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>attach-javadocs</id>
+                <goals>
+                  <goal>jar</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-gpg-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>sign-artifacts</id>
+                <phase>verify</phase>
+                <goals>
+                  <goal>sign</goal>
+                </goals>
+                <configuration>
+                  <gpgArguments>
+                    <arg>--pinentry-mode</arg>
+                    <arg>loopback</arg>
+                  </gpgArguments>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
         </plugins>
       </build>
-      <distributionManagement>
-        <repository>
-          <id>github-temporal-rift-bom</id>
-          <name>Temporal Rift GitHub Packages</name>
-          <url>https://maven.pkg.github.com/temporal-rift/temporal-rift-bom</url>
-        </repository>
-      </distributionManagement>
     </profile>
   </profiles>
 
