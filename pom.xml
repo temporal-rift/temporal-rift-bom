@@ -13,7 +13,7 @@
 
   <groupId>io.github.temporal-rift</groupId>
   <artifactId>temporal-rift-bom</artifactId>
-  <version>1.0.6</version>
+  <version>1.0.7</version>
   <packaging>pom</packaging>
 
   <name>Temporal Rift BOM</name>
@@ -67,7 +67,8 @@
 
     <!-- Third-party -->
     <mapstruct.version>1.6.3</mapstruct.version>
-    <swagger-annotations.version>2.2.43</swagger-annotations.version>
+    <spring-modulith.version>2.0.3</spring-modulith.version>
+    <swagger-annotations.version>2.2.45</swagger-annotations.version>
 
     <!-- Build plugins -->
     <maven-checkstyle-plugin.version>3.6.0</maven-checkstyle-plugin.version>
@@ -94,10 +95,19 @@
         <version>${domain-events.version}</version>
       </dependency>
 
+      <!-- Spring Modulith -->
+      <dependency>
+        <groupId>org.springframework.modulith</groupId>
+        <artifactId>spring-modulith-bom</artifactId>
+        <version>${spring-modulith.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+
       <!-- OpenAPI generated code -->
       <dependency>
         <groupId>io.swagger.core.v3</groupId>
-        <artifactId>swagger-annotations</artifactId>
+        <artifactId>swagger-annotations-jakarta</artifactId>
         <version>${swagger-annotations.version}</version>
       </dependency>
 
