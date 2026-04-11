@@ -13,12 +13,11 @@
 
   <groupId>io.github.temporal-rift</groupId>
   <artifactId>temporal-rift-bom</artifactId>
-  <version>1.0.5</version>
+  <version>1.0.6</version>
   <packaging>pom</packaging>
 
   <name>Temporal Rift BOM</name>
   <description>Parent BOM for Temporal Rift services — dependency management, formatting and code quality</description>
-
   <!--
     build-tools is NOT listed here as a module. It must be built and published
     to GitHub Packages separately BEFORE this BOM can be built.
@@ -64,8 +63,7 @@
 
     <!-- Temporal Rift -->
     <domain-events.version>1.0.1</domain-events.version>
-    <!-- Build tools/artifacts version (do NOT use ${project.version} here) -->
-    <build-tools.version>1.0.1</build-tools.version>
+    <build-tools.version>1.0.2</build-tools.version>
 
     <!-- Third-party -->
     <mapstruct.version>1.6.3</mapstruct.version>
@@ -257,7 +255,7 @@
             <configuration>
               <rules>
                 <requireJavaVersion>
-                  <version>${java.version}</version>
+                  <version>[25,)</version>
                 </requireJavaVersion>
                 <requireMavenVersion>
                   <version>[3.9.13,)</version>
@@ -295,7 +293,7 @@
               <formatJavadoc>false</formatJavadoc>
             </palantirJavaFormat>
             <importOrder>
-              <order>java|javax,,io.github.temporalrift,#</order>
+              <order>#,java|javax,,io.github.temporalrift</order>
             </importOrder>
             <replaceRegex>
               <name>Remove wildcard imports</name>

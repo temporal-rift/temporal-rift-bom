@@ -119,7 +119,7 @@
       <property name="customImportOrderRules"
                 value="STATIC###STANDARD_JAVA_PACKAGE###THIRD_PARTY_PACKAGE###SPECIAL_IMPORTS"/>
       <property name="tokens" value="IMPORT, STATIC_IMPORT, PACKAGE_DEF"/>
-      <property name="specialImportsRegExp" value="com\.temporalrift\."/>
+      <property name="specialImportsRegExp" value="io\.github\.temporalrift\."/>
     </module>
 
     <!-- Miscellaneous -->
