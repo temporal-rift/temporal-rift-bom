@@ -44,7 +44,7 @@ jobs:
           echo "VERSION=$VERSION" >> $GITHUB_ENV
 
           STATUS=$(curl -s -o /dev/null -w "%{http_code}" -L \
-            "https://repo1.maven.org/maven2/com/temporalrift/temporal-rift-bom/$VERSION/temporal-rift-bom-$VERSION.pom")
+            "https://repo1.maven.org/maven2/io/github/temporal-rift/temporal-rift-bom/$VERSION/temporal-rift-bom-$VERSION.pom")
           echo "BOM HTTP Status: $STATUS"
           echo "VERSION_CHANGED=$( [ "$STATUS" = "200" ] && echo false || echo true )" >> $GITHUB_ENV
 
@@ -52,7 +52,7 @@ jobs:
           echo "BUILD_TOOLS_VERSION=$BUILD_TOOLS_VERSION" >> $GITHUB_ENV
 
           BT_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -L \
-            "https://repo1.maven.org/maven2/com/temporalrift/temporal-rift-build-tools/$BUILD_TOOLS_VERSION/temporal-rift-build-tools-$BUILD_TOOLS_VERSION.pom")
+            "https://repo1.maven.org/maven2/io/github/temporal-rift/temporal-rift-build-tools/$BUILD_TOOLS_VERSION/temporal-rift-build-tools-$BUILD_TOOLS_VERSION.pom")
           echo "build-tools HTTP Status: $BT_STATUS"
           echo "BUILD_TOOLS_CHANGED=$( [ "$BT_STATUS" = "200" ] && echo false || echo true )" >> $GITHUB_ENV
 
