@@ -13,7 +13,7 @@
 
   <groupId>io.github.temporal-rift</groupId>
   <artifactId>temporal-rift-bom</artifactId>
-  <version>1.0.7</version>
+  <version>1.0.8</version>
   <packaging>pom</packaging>
 
   <name>Temporal Rift BOM</name>
@@ -62,7 +62,6 @@
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
     <!-- Temporal Rift -->
-    <domain-events.version>1.0.1</domain-events.version>
     <build-tools.version>1.0.2</build-tools.version>
 
     <!-- Third-party -->
@@ -87,13 +86,6 @@
 
   <dependencyManagement>
     <dependencies>
-
-      <!-- Temporal Rift shared contracts -->
-      <dependency>
-        <groupId>io.github.temporal-rift</groupId>
-        <artifactId>domain-events</artifactId>
-        <version>${domain-events.version}</version>
-      </dependency>
 
       <!-- Spring Modulith -->
       <dependency>
