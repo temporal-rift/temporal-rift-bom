@@ -11,7 +11,7 @@
     <relativePath/>
   </parent>
 
-  <groupId>com.temporalrift</groupId>
+  <groupId>io.github.temporal-rift</groupId>
   <artifactId>temporal-rift-bom</artifactId>
   <version>1.0.5</version>
   <packaging>pom</packaging>
@@ -91,7 +91,7 @@
 
       <!-- Temporal Rift shared contracts -->
       <dependency>
-        <groupId>com.temporalrift</groupId>
+        <groupId>io.github.temporal-rift</groupId>
         <artifactId>domain-events</artifactId>
         <version>${domain-events.version}</version>
       </dependency>
@@ -151,7 +151,7 @@
               <version>${checkstyle.version}</version>
             </dependency>
             <dependency>
-              <groupId>com.temporalrift</groupId>
+              <groupId>io.github.temporal-rift</groupId>
               <artifactId>temporal-rift-build-tools</artifactId>
               <version>${build-tools.version}</version>
             </dependency>
@@ -295,7 +295,7 @@
               <formatJavadoc>false</formatJavadoc>
             </palantirJavaFormat>
             <importOrder>
-              <order>java|javax,,com.temporalrift,#</order>
+              <order>java|javax,,io.github.temporalrift,#</order>
             </importOrder>
             <replaceRegex>
               <name>Remove wildcard imports</name>
