@@ -7,13 +7,13 @@
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>4.0.4</version>
+    <version>4.0.5</version>
     <relativePath/>
   </parent>
 
   <groupId>io.github.temporal-rift</groupId>
   <artifactId>temporal-rift-bom</artifactId>
-  <version>1.0.8</version>
+  <version>1.0.9</version>
   <packaging>pom</packaging>
 
   <name>Temporal Rift BOM</name>
