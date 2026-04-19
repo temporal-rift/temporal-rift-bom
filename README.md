@@ -57,13 +57,25 @@ mvn deploy -Pcentral -Denforcer.skip=true
 
 ## IDE Setup (IntelliJ)
 
-Code style is driven by a workspace-level `.editorconfig` placed one directory above the repository roots
-(i.e. alongside `game-service/`, `domain-events/`, etc.). IntelliJ reads it automatically via its built-in
-EditorConfig support — no manual scheme import required.
+Code style is driven by a workspace-level `.editorconfig`. The file lives at the root of this repo and must be
+copied **one level above** all cloned service repositories so IntelliJ finds it as the workspace root:
 
-The file contains `root = true` so IntelliJ stops searching at that level and does not pick up any other config
-higher up. It includes all IntelliJ-specific `ij_java_*` settings, including the correct import group order
-that matches what Checkstyle enforces at build time.
+```
+your-workspace/          ← copy .editorconfig here
+├── temporal-rift-bom/
+├── game-service/
+├── domain-events/
+└── ...
+```
+
+```bash
+# from your workspace root
+cp temporal-rift-bom/.editorconfig .
+```
+
+IntelliJ reads it automatically via its built-in EditorConfig support — no manual scheme import required.
+The `root = true` header stops IntelliJ from searching further up the filesystem. It includes all
+`ij_java_*` settings, including the import group order that matches what Checkstyle enforces at build time.
 
 Spotless enforces final formatting at build time (`mvn validate`); the `.editorconfig` handles live editing comfort.
 
