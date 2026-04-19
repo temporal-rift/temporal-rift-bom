@@ -40,7 +40,7 @@ mvn deploy -Pcentral -Denforcer.skip=true
 <parent>
   <groupId>io.github.temporal-rift</groupId>
   <artifactId>temporal-rift-bom</artifactId>
-  <version>1.0.5</version>
+  <version>1.0.9</version>
 </parent>
 ```
 
@@ -53,14 +53,19 @@ mvn deploy -Pcentral -Denforcer.skip=true
 | Enforcement      | Maven Enforcer (Java 25, Maven 3.9.13+)    |
 | Coverage         | JaCoCo (managed, opt-in per service)       |
 | API generation   | OpenAPI Generator 7.20.0 (managed, opt-in) |
-| Shared contracts | `domain-events:1.0.1`                      |
+| Shared contracts | `domain-events:1.0.4`                      |
 
 ## IDE Setup (IntelliJ)
 
-Import the code style scheme via **Settings → Editor → Code Style → gear icon → Import Scheme → IntelliJ IDEA code style
-XML**, select `docs-site/TemporalRift.xml`, and set the active scheme to **TemporalRift**.
+Code style is driven by a workspace-level `.editorconfig` placed one directory above the repository roots
+(i.e. alongside `game-service/`, `domain-events/`, etc.). IntelliJ reads it automatically via its built-in
+EditorConfig support — no manual scheme import required.
 
-Spotless enforces final formatting at build time (`mvn validate`); the IDE scheme handles live editing comfort.
+The file contains `root = true` so IntelliJ stops searching at that level and does not pick up any other config
+higher up. It includes all IntelliJ-specific `ij_java_*` settings, including the correct import group order
+that matches what Checkstyle enforces at build time.
+
+Spotless enforces final formatting at build time (`mvn validate`); the `.editorconfig` handles live editing comfort.
 
 ## Commands
 
