@@ -13,7 +13,7 @@
 
   <groupId>io.github.temporal-rift</groupId>
   <artifactId>temporal-rift-bom</artifactId>
-  <version>1.0.9</version>
+  <version>1.0.10</version>
   <packaging>pom</packaging>
 
   <name>Temporal Rift BOM</name>
@@ -62,7 +62,7 @@
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
     <!-- Temporal Rift -->
-    <build-tools.version>1.0.2</build-tools.version>
+    <build-tools.version>1.0.3</build-tools.version>
 
     <!-- Third-party -->
     <mapstruct.version>1.6.3</mapstruct.version>
