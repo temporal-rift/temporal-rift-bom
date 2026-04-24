@@ -2,394 +2,395 @@
 <project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xmlns="http://maven.apache.org/POM/4.0.0"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
+    <modelVersion>4.0.0</modelVersion>
 
-  <parent>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-starter-parent</artifactId>
-    <version>4.0.5</version>
-    <relativePath/>
-  </parent>
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>4.0.6</version>
+        <relativePath/>
+    </parent>
 
-  <groupId>io.github.temporal-rift</groupId>
-  <artifactId>temporal-rift-bom</artifactId>
-  <version>1.0.12</version>
-  <packaging>pom</packaging>
+    <groupId>io.github.temporal-rift</groupId>
+    <artifactId>temporal-rift-bom</artifactId>
+    <version>1.0.13</version>
+    <packaging>pom</packaging>
 
-  <name>Temporal Rift BOM</name>
-  <description>Parent BOM for Temporal Rift services — dependency management, formatting and code quality</description>
-  <!--
-    build-tools is NOT listed here as a module. It must be built and published
-    to GitHub Packages separately BEFORE this BOM can be built.
-    See README.md for the correct build order.
-  -->
+    <name>Temporal Rift BOM</name>
+    <description>Parent BOM for Temporal Rift services — dependency management, formatting and code quality
+    </description>
+    <!--
+      build-tools is NOT listed here as a module. It must be built and published
+      to GitHub Packages separately BEFORE this BOM can be built.
+      See README.md for the correct build order.
+    -->
 
-  <licenses>
-    <license>
-      <name>GNU General Public License v3.0</name>
-      <url>https://www.gnu.org/licenses/gpl-3.0.txt</url>
-      <distribution>repo</distribution>
-    </license>
-  </licenses>
+    <licenses>
+        <license>
+            <name>GNU General Public License v3.0</name>
+            <url>https://www.gnu.org/licenses/gpl-3.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
 
-  <developers>
-    <developer>
-      <id>kronen</id>
-      <name>Alberto Gonzalez Lagos</name>
-      <email>kronenr@gmail.com</email>
-      <url>https://github.com/kronen</url>
-      <roles>
-        <role>architect</role>
-        <role>developer</role>
-      </roles>
-      <timezone>Europe/Madrid</timezone>
-    </developer>
-  </developers>
+    <developers>
+        <developer>
+            <id>kronen</id>
+            <name>Alberto Gonzalez Lagos</name>
+            <email>kronenr@gmail.com</email>
+            <url>https://github.com/kronen</url>
+            <roles>
+                <role>architect</role>
+                <role>developer</role>
+            </roles>
+            <timezone>Europe/Madrid</timezone>
+        </developer>
+    </developers>
 
-  <url>https://github.com/temporal-rift/temporal-rift-bom</url>
-
-  <scm>
-    <connection>scm:git:git@github.com:temporal-rift/temporal-rift-bom.git</connection>
-    <developerConnection>scm:git:git@github.com:temporal-rift/temporal-rift-bom.git</developerConnection>
     <url>https://github.com/temporal-rift/temporal-rift-bom</url>
-    <tag>HEAD</tag>
-  </scm>
 
-  <properties>
-    <java.version>25</java.version>
-    <maven.compiler.release>25</maven.compiler.release>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    <scm>
+        <connection>scm:git:git@github.com:temporal-rift/temporal-rift-bom.git</connection>
+        <developerConnection>scm:git:git@github.com:temporal-rift/temporal-rift-bom.git</developerConnection>
+        <url>https://github.com/temporal-rift/temporal-rift-bom</url>
+        <tag>HEAD</tag>
+    </scm>
 
-    <!-- Temporal Rift -->
-    <build-tools.version>1.0.3</build-tools.version>
+    <properties>
+        <java.version>25</java.version>
+        <maven.compiler.release>25</maven.compiler.release>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
-    <!-- Third-party -->
-    <mapstruct.version>1.6.3</mapstruct.version>
-    <spring-modulith.version>2.0.3</spring-modulith.version>
-    <swagger-annotations.version>2.2.45</swagger-annotations.version>
+        <!-- Temporal Rift -->
+        <build-tools.version>1.0.3</build-tools.version>
 
-    <!-- Build plugins -->
-    <maven-checkstyle-plugin.version>3.6.0</maven-checkstyle-plugin.version>
-    <checkstyle.version>13.2.0</checkstyle.version>
-    <spotless-maven-plugin.version>3.2.1</spotless-maven-plugin.version>
-    <palantir-java-format.version>2.90.0</palantir-java-format.version>
-    <maven-enforcer-plugin.version>3.6.2</maven-enforcer-plugin.version>
-    <maven-compiler-plugin.version>3.15.0</maven-compiler-plugin.version>
-    <maven-source-plugin.version>3.4.0</maven-source-plugin.version>
-    <maven-javadoc-plugin.version>3.12.0</maven-javadoc-plugin.version>
-    <maven-gpg-plugin.version>3.2.8</maven-gpg-plugin.version>
-    <central-publishing-maven-plugin.version>0.9.0</central-publishing-maven-plugin.version>
-    <jacoco-maven-plugin.version>0.8.14</jacoco-maven-plugin.version>
-    <openapi-generator-plugin.version>7.20.0</openapi-generator-plugin.version>
-  </properties>
+        <!-- Third-party -->
+        <mapstruct.version>1.6.3</mapstruct.version>
+        <spring-modulith.version>2.0.3</spring-modulith.version>
+        <swagger-annotations.version>2.2.45</swagger-annotations.version>
 
-  <dependencyManagement>
-    <dependencies>
+        <!-- Build plugins -->
+        <maven-checkstyle-plugin.version>3.6.0</maven-checkstyle-plugin.version>
+        <checkstyle.version>13.2.0</checkstyle.version>
+        <spotless-maven-plugin.version>3.2.1</spotless-maven-plugin.version>
+        <palantir-java-format.version>2.90.0</palantir-java-format.version>
+        <maven-enforcer-plugin.version>3.6.2</maven-enforcer-plugin.version>
+        <maven-compiler-plugin.version>3.15.0</maven-compiler-plugin.version>
+        <maven-source-plugin.version>3.4.0</maven-source-plugin.version>
+        <maven-javadoc-plugin.version>3.12.0</maven-javadoc-plugin.version>
+        <maven-gpg-plugin.version>3.2.8</maven-gpg-plugin.version>
+        <central-publishing-maven-plugin.version>0.9.0</central-publishing-maven-plugin.version>
+        <jacoco-maven-plugin.version>0.8.14</jacoco-maven-plugin.version>
+        <openapi-generator-plugin.version>7.20.0</openapi-generator-plugin.version>
+    </properties>
 
-      <!-- Spring Modulith -->
-      <dependency>
-        <groupId>org.springframework.modulith</groupId>
-        <artifactId>spring-modulith-bom</artifactId>
-        <version>${spring-modulith.version}</version>
-        <type>pom</type>
-        <scope>import</scope>
-      </dependency>
+    <dependencyManagement>
+        <dependencies>
 
-      <!-- OpenAPI generated code -->
-      <dependency>
-        <groupId>io.swagger.core.v3</groupId>
-        <artifactId>swagger-annotations-jakarta</artifactId>
-        <version>${swagger-annotations.version}</version>
-      </dependency>
+            <!-- Spring Modulith -->
+            <dependency>
+                <groupId>org.springframework.modulith</groupId>
+                <artifactId>spring-modulith-bom</artifactId>
+                <version>${spring-modulith.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
 
-      <!-- Mapping between layers -->
-      <dependency>
-        <groupId>org.mapstruct</groupId>
-        <artifactId>mapstruct</artifactId>
-        <version>${mapstruct.version}</version>
-      </dependency>
+            <!-- OpenAPI generated code -->
+            <dependency>
+                <groupId>io.swagger.core.v3</groupId>
+                <artifactId>swagger-annotations-jakarta</artifactId>
+                <version>${swagger-annotations.version}</version>
+            </dependency>
 
-    </dependencies>
-  </dependencyManagement>
-
-  <build>
-    <pluginManagement>
-      <plugins>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-compiler-plugin</artifactId>
-          <version>${maven-compiler-plugin.version}</version>
-          <configuration>
-            <annotationProcessorPaths>
-              <path>
+            <!-- Mapping between layers -->
+            <dependency>
                 <groupId>org.mapstruct</groupId>
-                <artifactId>mapstruct-processor</artifactId>
+                <artifactId>mapstruct</artifactId>
                 <version>${mapstruct.version}</version>
-              </path>
-            </annotationProcessorPaths>
-            <compilerArgs>
-              <arg>-Amapstruct.defaultComponentModel=spring</arg>
-            </compilerArgs>
-          </configuration>
-        </plugin>
-
-        <plugin>
-          <groupId>com.diffplug.spotless</groupId>
-          <artifactId>spotless-maven-plugin</artifactId>
-          <version>${spotless-maven-plugin.version}</version>
-        </plugin>
-
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-checkstyle-plugin</artifactId>
-          <version>${maven-checkstyle-plugin.version}</version>
-          <dependencies>
-            <dependency>
-              <groupId>com.puppycrawl.tools</groupId>
-              <artifactId>checkstyle</artifactId>
-              <version>${checkstyle.version}</version>
             </dependency>
-            <dependency>
-              <groupId>io.github.temporal-rift</groupId>
-              <artifactId>temporal-rift-build-tools</artifactId>
-              <version>${build-tools.version}</version>
-            </dependency>
-          </dependencies>
-        </plugin>
 
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-enforcer-plugin</artifactId>
-          <version>${maven-enforcer-plugin.version}</version>
-        </plugin>
+        </dependencies>
+    </dependencyManagement>
 
-        <plugin>
-          <groupId>org.jacoco</groupId>
-          <artifactId>jacoco-maven-plugin</artifactId>
-          <version>${jacoco-maven-plugin.version}</version>
-          <executions>
-            <execution>
-              <id>prepare-agent</id>
-              <goals>
-                <goal>prepare-agent</goal>
-              </goals>
-            </execution>
-            <execution>
-              <id>report</id>
-              <goals>
-                <goal>report</goal>
-              </goals>
-              <configuration>
-                <formats>
-                  <format>XML</format>
-                </formats>
-              </configuration>
-            </execution>
-          </executions>
-        </plugin>
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>${maven-compiler-plugin.version}</version>
+                    <configuration>
+                        <annotationProcessorPaths>
+                            <path>
+                                <groupId>org.mapstruct</groupId>
+                                <artifactId>mapstruct-processor</artifactId>
+                                <version>${mapstruct.version}</version>
+                            </path>
+                        </annotationProcessorPaths>
+                        <compilerArgs>
+                            <arg>-Amapstruct.defaultComponentModel=spring</arg>
+                        </compilerArgs>
+                    </configuration>
+                </plugin>
 
-        <plugin>
-          <groupId>org.openapitools</groupId>
-          <artifactId>openapi-generator-maven-plugin</artifactId>
-          <version>${openapi-generator-plugin.version}</version>
-          <configuration>
-            <generatorName>spring</generatorName>
-            <generateApiTests>false</generateApiTests>
-            <generateModelTests>false</generateModelTests>
-            <generateSupportingFiles>false</generateSupportingFiles>
-            <configOptions>
-              <openApiNullable>false</openApiNullable>
-              <performBeanValidation>true</performBeanValidation>
-              <library>spring-boot</library>
-              <useSpringBoot4>true</useSpringBoot4>
-              <reactive>false</reactive>
-              <interfaceOnly>true</interfaceOnly>
-              <dateLibrary>java8</dateLibrary>
-              <documentationProvider>springdoc</documentationProvider>
-              <skipDefaultInterface>true</skipDefaultInterface>
-              <useTags>true</useTags>
-            </configOptions>
-          </configuration>
-        </plugin>
+                <plugin>
+                    <groupId>com.diffplug.spotless</groupId>
+                    <artifactId>spotless-maven-plugin</artifactId>
+                    <version>${spotless-maven-plugin.version}</version>
+                </plugin>
 
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-source-plugin</artifactId>
-          <version>${maven-source-plugin.version}</version>
-        </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-checkstyle-plugin</artifactId>
+                    <version>${maven-checkstyle-plugin.version}</version>
+                    <dependencies>
+                        <dependency>
+                            <groupId>com.puppycrawl.tools</groupId>
+                            <artifactId>checkstyle</artifactId>
+                            <version>${checkstyle.version}</version>
+                        </dependency>
+                        <dependency>
+                            <groupId>io.github.temporal-rift</groupId>
+                            <artifactId>temporal-rift-build-tools</artifactId>
+                            <version>${build-tools.version}</version>
+                        </dependency>
+                    </dependencies>
+                </plugin>
 
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-javadoc-plugin</artifactId>
-          <version>${maven-javadoc-plugin.version}</version>
-          <configuration>
-            <doclint>none</doclint>
-          </configuration>
-        </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-enforcer-plugin</artifactId>
+                    <version>${maven-enforcer-plugin.version}</version>
+                </plugin>
 
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-gpg-plugin</artifactId>
-          <version>${maven-gpg-plugin.version}</version>
-        </plugin>
+                <plugin>
+                    <groupId>org.jacoco</groupId>
+                    <artifactId>jacoco-maven-plugin</artifactId>
+                    <version>${jacoco-maven-plugin.version}</version>
+                    <executions>
+                        <execution>
+                            <id>prepare-agent</id>
+                            <goals>
+                                <goal>prepare-agent</goal>
+                            </goals>
+                        </execution>
+                        <execution>
+                            <id>report</id>
+                            <goals>
+                                <goal>report</goal>
+                            </goals>
+                            <configuration>
+                                <formats>
+                                    <format>XML</format>
+                                </formats>
+                            </configuration>
+                        </execution>
+                    </executions>
+                </plugin>
 
-        <plugin>
-          <groupId>org.sonatype.central</groupId>
-          <artifactId>central-publishing-maven-plugin</artifactId>
-          <version>${central-publishing-maven-plugin.version}</version>
-        </plugin>
+                <plugin>
+                    <groupId>org.openapitools</groupId>
+                    <artifactId>openapi-generator-maven-plugin</artifactId>
+                    <version>${openapi-generator-plugin.version}</version>
+                    <configuration>
+                        <generatorName>spring</generatorName>
+                        <generateApiTests>false</generateApiTests>
+                        <generateModelTests>false</generateModelTests>
+                        <generateSupportingFiles>false</generateSupportingFiles>
+                        <configOptions>
+                            <openApiNullable>false</openApiNullable>
+                            <performBeanValidation>true</performBeanValidation>
+                            <library>spring-boot</library>
+                            <useSpringBoot4>true</useSpringBoot4>
+                            <reactive>false</reactive>
+                            <interfaceOnly>true</interfaceOnly>
+                            <dateLibrary>java8</dateLibrary>
+                            <documentationProvider>springdoc</documentationProvider>
+                            <skipDefaultInterface>true</skipDefaultInterface>
+                            <useTags>true</useTags>
+                        </configOptions>
+                    </configuration>
+                </plugin>
 
-      </plugins>
-    </pluginManagement>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-source-plugin</artifactId>
+                    <version>${maven-source-plugin.version}</version>
+                </plugin>
 
-    <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-javadoc-plugin</artifactId>
+                    <version>${maven-javadoc-plugin.version}</version>
+                    <configuration>
+                        <doclint>none</doclint>
+                    </configuration>
+                </plugin>
 
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-enforcer-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>enforce-versions</id>
-            <goals>
-              <goal>enforce</goal>
-            </goals>
-            <configuration>
-              <rules>
-                <requireJavaVersion>
-                  <version>[25,)</version>
-                </requireJavaVersion>
-                <requireMavenVersion>
-                  <version>[3.9.13,)</version>
-                </requireMavenVersion>
-                <requireReleaseDeps>
-                  <onlyWhenRelease>true</onlyWhenRelease>
-                  <message>Release builds must not have snapshot dependencies</message>
-                </requireReleaseDeps>
-              </rules>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-gpg-plugin</artifactId>
+                    <version>${maven-gpg-plugin.version}</version>
+                </plugin>
 
-      <plugin>
-        <groupId>com.diffplug.spotless</groupId>
-        <artifactId>spotless-maven-plugin</artifactId>
-        <executions>
-          <execution>
-            <phase>validate</phase>
-            <goals>
-              <goal>check</goal>
-            </goals>
-          </execution>
-        </executions>
-        <configuration>
-          <java>
-            <includes>
-              <include>src/main/java/**/*.java</include>
-              <include>src/test/java/**/*.java</include>
-            </includes>
-            <palantirJavaFormat>
-              <version>${palantir-java-format.version}</version>
-              <style>PALANTIR</style>
-              <formatJavadoc>false</formatJavadoc>
-            </palantirJavaFormat>
-            <importOrder>
-              <order>#,java|javax,,io.github.temporalrift</order>
-            </importOrder>
-            <replaceRegex>
-              <name>Remove wildcard imports</name>
-              <searchRegex>import\s+(?!static\s)[^\*\s]+\*;(\r\n|\r|\n)</searchRegex>
-              <replacement>$1</replacement>
-            </replaceRegex>
-            <removeUnusedImports/>
-            <formatAnnotations/>
-            <toggleOffOn/>
-          </java>
-        </configuration>
-      </plugin>
+                <plugin>
+                    <groupId>org.sonatype.central</groupId>
+                    <artifactId>central-publishing-maven-plugin</artifactId>
+                    <version>${central-publishing-maven-plugin.version}</version>
+                </plugin>
 
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-checkstyle-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>checkstyle-validation</id>
-            <phase>validate</phase>
-            <goals>
-              <goal>check</goal>
-            </goals>
-            <configuration>
-              <configLocation>checkstyle.xml</configLocation>
-              <includeTestSourceDirectory>true</includeTestSourceDirectory>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
+            </plugins>
+        </pluginManagement>
 
-    </plugins>
-  </build>
-
-  <profiles>
-    <profile>
-      <id>central</id>
-      <build>
         <plugins>
-          <plugin>
-            <groupId>org.sonatype.central</groupId>
-            <artifactId>central-publishing-maven-plugin</artifactId>
-            <extensions>true</extensions>
-            <configuration>
-              <publishingServerId>central</publishingServerId>
-              <autoPublish>true</autoPublish>
-            </configuration>
-          </plugin>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-source-plugin</artifactId>
-            <executions>
-              <execution>
-                <id>attach-sources</id>
-                <goals>
-                  <goal>jar-no-fork</goal>
-                </goals>
-              </execution>
-            </executions>
-          </plugin>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-javadoc-plugin</artifactId>
-            <executions>
-              <execution>
-                <id>attach-javadocs</id>
-                <goals>
-                  <goal>jar</goal>
-                </goals>
-              </execution>
-            </executions>
-          </plugin>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-gpg-plugin</artifactId>
-            <executions>
-              <execution>
-                <id>sign-artifacts</id>
-                <phase>verify</phase>
-                <goals>
-                  <goal>sign</goal>
-                </goals>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>enforce-versions</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <requireJavaVersion>
+                                    <version>[25,)</version>
+                                </requireJavaVersion>
+                                <requireMavenVersion>
+                                    <version>[3.9.13,)</version>
+                                </requireMavenVersion>
+                                <requireReleaseDeps>
+                                    <onlyWhenRelease>true</onlyWhenRelease>
+                                    <message>Release builds must not have snapshot dependencies</message>
+                                </requireReleaseDeps>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>com.diffplug.spotless</groupId>
+                <artifactId>spotless-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
                 <configuration>
-                  <gpgArguments>
-                    <arg>--pinentry-mode</arg>
-                    <arg>loopback</arg>
-                  </gpgArguments>
+                    <java>
+                        <includes>
+                            <include>src/main/java/**/*.java</include>
+                            <include>src/test/java/**/*.java</include>
+                        </includes>
+                        <palantirJavaFormat>
+                            <version>${palantir-java-format.version}</version>
+                            <style>PALANTIR</style>
+                            <formatJavadoc>false</formatJavadoc>
+                        </palantirJavaFormat>
+                        <importOrder>
+                            <order>#,java|javax,,io.github.temporalrift</order>
+                        </importOrder>
+                        <replaceRegex>
+                            <name>Remove wildcard imports</name>
+                            <searchRegex>import\s+(?!static\s)[^\*\s]+\*;(\r\n|\r|\n)</searchRegex>
+                            <replacement>$1</replacement>
+                        </replaceRegex>
+                        <removeUnusedImports/>
+                        <formatAnnotations/>
+                        <toggleOffOn/>
+                    </java>
                 </configuration>
-              </execution>
-            </executions>
-          </plugin>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>checkstyle-validation</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                        <configuration>
+                            <configLocation>checkstyle.xml</configLocation>
+                            <includeTestSourceDirectory>true</includeTestSourceDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
         </plugins>
-      </build>
-    </profile>
-  </profiles>
+    </build>
+
+    <profiles>
+        <profile>
+            <id>central</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.sonatype.central</groupId>
+                        <artifactId>central-publishing-maven-plugin</artifactId>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <publishingServerId>central</publishingServerId>
+                            <autoPublish>true</autoPublish>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-source-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>attach-sources</id>
+                                <goals>
+                                    <goal>jar-no-fork</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>attach-javadocs</id>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                                <configuration>
+                                    <gpgArguments>
+                                        <arg>--pinentry-mode</arg>
+                                        <arg>loopback</arg>
+                                    </gpgArguments>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 
 </project>
