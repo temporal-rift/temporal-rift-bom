@@ -13,7 +13,7 @@
 
     <groupId>io.github.temporal-rift</groupId>
     <artifactId>temporal-rift-bom</artifactId>
-    <version>1.0.13</version>
+    <version>1.0.14</version>
     <packaging>pom</packaging>
 
     <name>Temporal Rift BOM</name>
