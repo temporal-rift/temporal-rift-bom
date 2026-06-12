@@ -13,7 +13,7 @@
 
     <groupId>io.github.temporal-rift</groupId>
     <artifactId>temporal-rift-bom</artifactId>
-    <version>1.1.0</version>
+    <version>1.2.0</version>
     <packaging>pom</packaging>
 
     <name>Temporal Rift BOM</name>
@@ -69,6 +69,7 @@
         <mapstruct.version>1.6.3</mapstruct.version>
         <spring-modulith.version>2.1.0</spring-modulith.version>
         <swagger-annotations.version>2.2.49</swagger-annotations.version>
+        <awaitability.version>4.3.0</awaitability.version>
 
         <!-- Build plugins -->
         <maven-checkstyle-plugin.version>3.6.0</maven-checkstyle-plugin.version>
@@ -111,6 +112,13 @@
                 <version>${mapstruct.version}</version>
             </dependency>
 
+            <!-- Testing -->
+            <dependency>
+                <groupId>org.awaitility</groupId>
+                <artifactId>awaitility</artifactId>
+                <version>${awaitility.version}</version>
+                <scope>test</scope>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
