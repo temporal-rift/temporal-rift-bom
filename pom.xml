@@ -7,13 +7,13 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>4.0.6</version>
+        <version>4.1.0</version>
         <relativePath/>
     </parent>
 
     <groupId>io.github.temporal-rift</groupId>
     <artifactId>temporal-rift-bom</artifactId>
-    <version>1.0.14</version>
+    <version>1.1.0</version>
     <packaging>pom</packaging>
 
     <name>Temporal Rift BOM</name>
@@ -67,22 +67,22 @@
 
         <!-- Third-party -->
         <mapstruct.version>1.6.3</mapstruct.version>
-        <spring-modulith.version>2.0.3</spring-modulith.version>
-        <swagger-annotations.version>2.2.45</swagger-annotations.version>
+        <spring-modulith.version>2.1.0</spring-modulith.version>
+        <swagger-annotations.version>2.2.49</swagger-annotations.version>
 
         <!-- Build plugins -->
         <maven-checkstyle-plugin.version>3.6.0</maven-checkstyle-plugin.version>
-        <checkstyle.version>13.2.0</checkstyle.version>
-        <spotless-maven-plugin.version>3.2.1</spotless-maven-plugin.version>
-        <palantir-java-format.version>2.90.0</palantir-java-format.version>
-        <maven-enforcer-plugin.version>3.6.2</maven-enforcer-plugin.version>
+        <checkstyle.version>13.5.0</checkstyle.version>
+        <spotless-maven-plugin.version>3.6.0</spotless-maven-plugin.version>
+        <palantir-java-format.version>2.92.0</palantir-java-format.version>
+        <maven-enforcer-plugin.version>3.6.3</maven-enforcer-plugin.version>
         <maven-compiler-plugin.version>3.15.0</maven-compiler-plugin.version>
         <maven-source-plugin.version>3.4.0</maven-source-plugin.version>
         <maven-javadoc-plugin.version>3.12.0</maven-javadoc-plugin.version>
         <maven-gpg-plugin.version>3.2.8</maven-gpg-plugin.version>
-        <central-publishing-maven-plugin.version>0.9.0</central-publishing-maven-plugin.version>
-        <jacoco-maven-plugin.version>0.8.14</jacoco-maven-plugin.version>
-        <openapi-generator-plugin.version>7.20.0</openapi-generator-plugin.version>
+        <central-publishing-maven-plugin.version>0.10.0</central-publishing-maven-plugin.version>
+        <jacoco-maven-plugin.version>0.8.15</jacoco-maven-plugin.version>
+        <openapi-generator-plugin.version>7.23.0</openapi-generator-plugin.version>
     </properties>
 
     <dependencyManagement>
