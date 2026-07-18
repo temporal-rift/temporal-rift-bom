@@ -40,7 +40,7 @@ mvn deploy -Pcentral -Denforcer.skip=true
 <parent>
   <groupId>io.github.temporal-rift</groupId>
   <artifactId>temporal-rift-bom</artifactId>
-  <version>1.0.9</version>
+  <version>1.4.0</version>
 </parent>
 ```
 
