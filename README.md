@@ -53,7 +53,52 @@ mvn deploy -Pcentral -Denforcer.skip=true
 | Enforcement      | Maven Enforcer (Java 25, Maven 3.9.13+)    |
 | Coverage         | JaCoCo (managed, opt-in per service)       |
 | API generation   | OpenAPI Generator 7.20.0 (managed, opt-in) |
+| Event codegen    | ZenWave SDK 2.5.4 (managed, opt-in)        |
 | Shared contracts | `domain-events:1.0.4`                      |
+
+## Generating code from an `apis` AsyncAPI spec
+
+The `apis` repo publishes spec-only dependencies (an `asyncapi.yml` packaged as a plain resource, no
+generated code). A service that wants producer/consumer code from one adds the spec as a dependency and
+declares its own `<execution>` — plugin identity, the generator dependency, and shared defaults
+(`generatorName`, `templates`, `transactionalOutbox`, `generateMessageHeaders`) are already managed here, so
+the consumer only supplies what's specific to that spec:
+
+```xml
+<dependency>
+    <groupId>io.github.temporal-rift</groupId>
+    <artifactId>session-event</artifactId>
+    <version>1.0.0</version>
+</dependency>
+```
+
+```xml
+<plugin>
+    <groupId>io.zenwave360.sdk</groupId>
+    <artifactId>zenwave-sdk-maven-plugin</artifactId>
+    <executions>
+        <execution>
+            <id>generate-session-events</id>
+            <phase>generate-sources</phase>
+            <goals>
+                <goal>generate</goal>
+            </goals>
+            <configuration>
+                <inputSpec>classpath:asyncapi/asyncapi.yml</inputSpec>
+                <configOptions>
+                    <role>provider</role>
+                    <modelPackage>your.own.package.events.model</modelPackage>
+                    <producerApiPackage>your.own.package.events.producer</producerApiPackage>
+                </configOptions>
+            </configuration>
+        </execution>
+    </executions>
+</plugin>
+```
+
+`role=client` generates a consumer instead — use `consumerApiPackage` in that case. This mirrors the
+existing OpenAPI Generator split above: identity and defaults centralized here, per-spec `inputSpec` and
+target packages declared where the spec is actually consumed.
 
 ## IDE Setup (IntelliJ)
 
