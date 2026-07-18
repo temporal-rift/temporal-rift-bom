@@ -13,7 +13,7 @@
 
     <groupId>io.github.temporal-rift</groupId>
     <artifactId>temporal-rift-bom</artifactId>
-    <version>1.3.0</version>
+    <version>1.4.0</version>
     <packaging>pom</packaging>
 
     <name>Temporal Rift BOM</name>
@@ -84,6 +84,7 @@
         <central-publishing-maven-plugin.version>0.10.0</central-publishing-maven-plugin.version>
         <jacoco-maven-plugin.version>0.8.15</jacoco-maven-plugin.version>
         <openapi-generator-plugin.version>7.23.0</openapi-generator-plugin.version>
+        <zenwave-sdk.version>2.5.4</zenwave-sdk.version>
     </properties>
 
     <dependencyManagement>
@@ -218,6 +219,32 @@
                             <documentationProvider>springdoc</documentationProvider>
                             <skipDefaultInterface>true</skipDefaultInterface>
                             <useTags>true</useTags>
+                        </configOptions>
+                    </configuration>
+                </plugin>
+
+                <!-- AsyncAPI codegen for services consuming an apis/*-event spec dependency. Plugin
+                     identity, generator dependency and defaults shared by every role live here; a
+                     consumer declares its own <executions> with the spec-specific inputSpec/role/package,
+                     the same split already used for openapi-generator-maven-plugin above. -->
+                <plugin>
+                    <groupId>io.zenwave360.sdk</groupId>
+                    <artifactId>zenwave-sdk-maven-plugin</artifactId>
+                    <version>${zenwave-sdk.version}</version>
+                    <dependencies>
+                        <dependency>
+                            <groupId>io.zenwave360.sdk.plugins</groupId>
+                            <artifactId>asyncapi-generator</artifactId>
+                            <version>${zenwave-sdk.version}</version>
+                        </dependency>
+                    </dependencies>
+                    <configuration>
+                        <generatorName>AsyncAPIGenerator</generatorName>
+                        <addCompileSourceRoot>true</addCompileSourceRoot>
+                        <configOptions>
+                            <templates>SpringCloudStream</templates>
+                            <transactionalOutbox>modulith</transactionalOutbox>
+                            <generateMessageHeaders>true</generateMessageHeaders>
                         </configOptions>
                     </configuration>
                 </plugin>
