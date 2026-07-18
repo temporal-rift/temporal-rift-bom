@@ -13,7 +13,7 @@
 
     <groupId>io.github.temporal-rift</groupId>
     <artifactId>temporal-rift-bom</artifactId>
-    <version>1.4.0</version>
+    <version>1.5.0</version>
     <packaging>pom</packaging>
 
     <name>Temporal Rift BOM</name>
@@ -68,6 +68,8 @@
         <!-- Third-party -->
         <mapstruct.version>1.6.3</mapstruct.version>
         <spring-modulith.version>2.1.0</spring-modulith.version>
+        <spring-cloud.version>2025.1.2</spring-cloud.version>
+        <spring-modulith-events-scs.version>1.2.0</spring-modulith-events-scs.version>
         <swagger-annotations.version>2.2.52</swagger-annotations.version>
         <awaitability.version>4.3.0</awaitability.version>
 
@@ -97,6 +99,22 @@
                 <version>${spring-modulith.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
+            </dependency>
+
+            <!-- Spring Cloud (Stream) -->
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <!-- Bridges Spring Modulith's transactional outbox relay to Spring Cloud Stream bindings -->
+            <dependency>
+                <groupId>io.zenwave360.sdk</groupId>
+                <artifactId>spring-modulith-events-scs</artifactId>
+                <version>${spring-modulith-events-scs.version}</version>
             </dependency>
 
             <!-- OpenAPI generated code -->
