@@ -65,6 +65,13 @@
         <!-- Temporal Rift -->
         <build-tools.version>1.0.4</build-tools.version>
 
+        <!-- Security patches (override spring-boot-starter-parent managed versions) -->
+        <jackson-2-bom.version>2.21.5</jackson-2-bom.version>
+        <jackson-bom.version>3.1.5</jackson-bom.version>
+        <logback.version>1.5.36</logback.version>
+        <postgresql.version>42.7.12</postgresql.version>
+        <tomcat.version>11.0.23</tomcat.version>
+
         <!-- Third-party -->
         <mapstruct.version>1.6.3</mapstruct.version>
         <spring-modulith.version>2.1.0</spring-modulith.version>
