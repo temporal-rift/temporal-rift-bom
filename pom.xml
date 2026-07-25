@@ -13,7 +13,7 @@
 
     <groupId>io.github.temporal-rift</groupId>
     <artifactId>temporal-rift-bom</artifactId>
-    <version>1.5.1</version>
+    <version>1.5.2</version>
     <packaging>pom</packaging>
 
     <name>Temporal Rift BOM</name>
@@ -94,6 +94,7 @@
         <jacoco-maven-plugin.version>0.8.15</jacoco-maven-plugin.version>
         <openapi-generator-plugin.version>7.23.0</openapi-generator-plugin.version>
         <zenwave-sdk.version>2.5.4</zenwave-sdk.version>
+        <sonar-maven-plugin.version>5.7.0.6970</sonar-maven-plugin.version>
     </properties>
 
     <dependencyManagement>
@@ -222,6 +223,16 @@
                             </configuration>
                         </execution>
                     </executions>
+                </plugin>
+
+                <!-- No <executions> — services invoke this by its bare "sonar" CLI prefix
+                     (mvn verify sonar:sonar), never bound to a lifecycle phase. Maven can only resolve
+                     a bare prefix for a groupId that's declared somewhere in the effective POM's plugins,
+                     so this entry must stay even though it configures nothing. -->
+                <plugin>
+                    <groupId>org.sonarsource.scanner.maven</groupId>
+                    <artifactId>sonar-maven-plugin</artifactId>
+                    <version>${sonar-maven-plugin.version}</version>
                 </plugin>
 
                 <plugin>
