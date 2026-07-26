@@ -54,7 +54,7 @@ mvn deploy -Pcentral -Denforcer.skip=true
 | Coverage         | JaCoCo (managed, opt-in per service)       |
 | API generation   | OpenAPI Generator 7.20.0 (managed, opt-in) |
 | Event codegen    | ZenWave SDK 2.5.4 (managed, opt-in)        |
-| Shared contracts | `domain-events:1.0.4`                      |
+| Event contracts  | spec-only AsyncAPI modules from `apis`     |
 
 ## Generating code from an `apis` AsyncAPI spec
 
@@ -109,7 +109,7 @@ copied **one level above** all cloned service repositories so IntelliJ finds it 
 your-workspace/          ← copy .editorconfig here
 ├── temporal-rift-bom/
 ├── game-service/
-├── domain-events/
+├── apis/
 └── ...
 ```
 
