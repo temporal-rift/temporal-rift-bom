@@ -23,15 +23,8 @@ Listing it as a module would create a circular plugin dependency.
 `build-tools` must be published to Maven Central **before** the root BOM.
 The CI workflow (`publish.yml`) handles this automatically in a single job.
 
-### Manual publishing (requires Sonatype credentials + GPG key in `~/.m2/settings.xml`)
-
-```bash
-# 1. Publish build-tools
-mvn -f build-tools/pom.xml deploy -Pcentral
-
-# 2. Publish root BOM
-mvn deploy -Pcentral -Denforcer.skip=true
-```
+The `main`-branch publishing workflow releases `build-tools` and the root BOM in this order. Do not use local Maven
+publication to bridge a consumer to an unreleased BOM version.
 
 ## Usage in services
 
@@ -40,7 +33,7 @@ mvn deploy -Pcentral -Denforcer.skip=true
 <parent>
   <groupId>io.github.temporal-rift</groupId>
   <artifactId>temporal-rift-bom</artifactId>
-  <version>1.4.0</version>
+  <version>1.5.3</version>
 </parent>
 ```
 
@@ -54,15 +47,15 @@ mvn deploy -Pcentral -Denforcer.skip=true
 | Coverage         | JaCoCo (managed, opt-in per service)       |
 | API generation   | OpenAPI Generator 7.20.0 (managed, opt-in) |
 | Event codegen    | ZenWave SDK 2.5.4 (managed, opt-in)        |
-| Event contracts  | spec-only AsyncAPI modules from `apis`     |
+| Contract resources | Generic unpacking of spec-only OpenAPI and AsyncAPI modules from `apis` |
 
-## Generating code from an `apis` AsyncAPI spec
+## Generating code from an `apis` contract
 
-The `apis` repo publishes spec-only dependencies (an `asyncapi.yml` packaged as a plain resource, no
-generated code). A service that wants producer/consumer code from one adds the spec as a dependency and
-declares its own `<execution>` — plugin identity, the generator dependency, and shared defaults
-(`generatorName`, `templates`, `transactionalOutbox`, `generateMessageHeaders`) are already managed here, so
-the consumer only supplies what's specific to that spec:
+The `apis` repo publishes spec-only OpenAPI and AsyncAPI dependencies. This BOM extracts `openapi/**` and
+`asyncapi/**` from every Temporal Rift dependency during `initialize`, before code generation. Each artifact is
+isolated at `${project.build.directory}/dependency-specs/{artifactId}-{version}-jar/`, so same-named AsyncAPI resources
+cannot overwrite one another. A consumer adds only the contract dependency and the generator execution whose package
+and role are specific to that service.
 
 ```xml
 <dependency>
@@ -84,7 +77,8 @@ the consumer only supplies what's specific to that spec:
                 <goal>generate</goal>
             </goals>
             <configuration>
-                <inputSpec>classpath:asyncapi/asyncapi.yml</inputSpec>
+                <inputSpec>${project.build.directory}/dependency-specs/session-event-1.0.0-jar/asyncapi/asyncapi.yml
+                </inputSpec>
                 <configOptions>
                     <role>provider</role>
                     <modelPackage>your.own.package.events.model</modelPackage>
@@ -96,9 +90,10 @@ the consumer only supplies what's specific to that spec:
 </plugin>
 ```
 
-`role=client` generates a consumer instead — use `consumerApiPackage` in that case. This mirrors the
-existing OpenAPI Generator split above: identity and defaults centralized here, per-spec `inputSpec` and
-target packages declared where the spec is actually consumed.
+`role=client` generates a consumer instead — use `consumerApiPackage` in that case. For a REST contract, use the
+matching path such as `${project.build.directory}/dependency-specs/session-api-1.0.0-jar/openapi/session.yml` as the
+OpenAPI Generator input. Plugin identity and shared defaults remain centralised here; generated package, output, and
+AsyncAPI role remain consumer-specific.
 
 ## IDE Setup (IntelliJ)
 
