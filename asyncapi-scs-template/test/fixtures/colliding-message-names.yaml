@@ -1,0 +1,45 @@
+asyncapi: 3.0.0
+info:
+  title: Colliding message names fixture
+  version: 1.0.0
+servers:
+  kafka:
+    host: localhost:9092
+    protocol: kafka
+channels:
+  gameEvents:
+    address: game.events
+    messages:
+      orderCreated:
+        $ref: '#/components/messages/OrderCreated'
+      orderCreatedAlt:
+        $ref: '#/components/messages/OrderCreatedAlt'
+operations:
+  publishOrderCreated:
+    action: send
+    channel:
+      $ref: '#/channels/gameEvents'
+    messages:
+      - $ref: '#/channels/gameEvents/messages/orderCreated'
+  publishOrderCreatedAlt:
+    action: send
+    channel:
+      $ref: '#/channels/gameEvents'
+    messages:
+      - $ref: '#/channels/gameEvents/messages/orderCreatedAlt'
+components:
+  messages:
+    OrderCreated:
+      name: order-created
+      payload:
+        type: object
+        properties:
+          gameId:
+            type: string
+    OrderCreatedAlt:
+      name: order_created
+      payload:
+        type: object
+        properties:
+          gameId:
+            type: string
