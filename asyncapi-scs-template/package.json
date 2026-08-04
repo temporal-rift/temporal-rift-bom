@@ -9,7 +9,9 @@
     "supportedProtocols": ["kafka"]
   },
   "scripts": {
-    "test:golden": "node test/verify-golden-output.mjs"
+    "test:golden": "node test/verify-golden-output.mjs",
+    "test:collision": "node test/verify-collision-rejection.mjs",
+    "test": "npm run test:golden && npm run test:collision"
   },
   "devDependencies": {
     "@asyncapi/cli": "6.0.2",
