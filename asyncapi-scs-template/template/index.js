@@ -3,7 +3,12 @@ import { File, Text } from '@asyncapi/generator-react-sdk';
 const JAVA_PACKAGE = 'io.github.temporalrift.asyncapi.generated';
 
 function javaName(value) {
-  return value.replace(/[^A-Za-z0-9]/g, '');
+  const camel = value
+    .split(/[^A-Za-z0-9]+/)
+    .filter(Boolean)
+    .map((part, index) => (index === 0 ? part : part.charAt(0).toUpperCase() + part.slice(1)))
+    .join('');
+  return /^[0-9]/.test(camel) ? `Msg${camel}` : camel;
 }
 
 function bindingName(address) {
@@ -18,6 +23,17 @@ export default function ({ asyncapi }) {
   const channels = asyncapi.channels().all();
   const messages = [...new Map(channels.flatMap((channel) => channel.messages().all())
     .map((message) => [message.name() ?? message.id(), message])).values()];
+  const seenJavaNames = new Map();
+  for (const message of messages) {
+    const rawName = message.name() ?? message.id();
+    const name = javaName(rawName);
+    const collidesWith = seenJavaNames.get(name);
+    if (collidesWith) {
+      throw new Error(`Message names "${collidesWith}" and "${rawName}" both generate the Java identifier "${name}"`);
+    }
+    seenJavaNames.set(name, rawName);
+  }
+
   const channel = channels[0];
   const address = channel.address();
   const producerMethods = messages.map((message) => {

@@ -1,4 +1,15 @@
 import { readFile } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
+import Generator from '@asyncapi/generator';
+
+const rootDir = fileURLToPath(new URL('..', import.meta.url));
+const outputDir = fileURLToPath(new URL('../.generated', import.meta.url));
+const fixturePath = fileURLToPath(
+  new URL('./fixtures/multiple-operations-one-channel.yaml', import.meta.url),
+);
+
+const generator = new Generator(rootDir, outputDir, { forceWrite: true, install: false });
+await generator.generateFromFile(fixturePath);
 
 const outputPath = new URL(
   '../.generated/GeneratedChannelContract.java',
