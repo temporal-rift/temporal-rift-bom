@@ -15,8 +15,7 @@
   },
   "devDependencies": {
     "@asyncapi/cli": "6.0.2",
-    "@asyncapi/generator": "3.3.0",
-    "@asyncapi/modelina": "4.4.3"
+    "@asyncapi/generator": "3.3.0"
   },
   "dependencies": {
     "@asyncapi/generator-react-sdk": "1.1.2"
