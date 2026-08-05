@@ -37,6 +37,29 @@ jobs:
           gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
           passphrase: ${{ secrets.GPG_PASSPHRASE }}
 
+      - name: Verify standalone module versions match their root pom consumer properties
+        run: |
+          # Every standalone module (built and published independently of the reactor, then consumed back by the
+          # root pom via a "${<module>.version}" property) must have its own pom.xml <version> match that property
+          # exactly — otherwise the root pom can silently pin a version of the module that was never published, or
+          # a stale one nobody intended. Add a new check_version_alignment call here for any future standalone
+          # module that follows this pattern.
+          check_version_alignment() {
+            local module_dir="$1"
+            local property_name="$2"
+            local module_version
+            module_version=$(mvn --batch-mode -q -f "$module_dir/pom.xml" help:evaluate -Dexpression=project.version -DforceStdout)
+            local root_property_version
+            root_property_version=$(mvn --batch-mode -q help:evaluate -Dexpression="$property_name" -DforceStdout)
+            if [ "$module_version" != "$root_property_version" ]; then
+              echo "Version mismatch: root pom.xml property '$property_name' is '$root_property_version' but $module_dir/pom.xml <version> is '$module_version'" >&2
+              exit 1
+            fi
+          }
+
+          check_version_alignment build-tools build-tools.version
+          check_version_alignment asyncapi-codegen-maven-plugin asyncapi-codegen-maven-plugin.version
+
       - name: Check if version already published
         id: version_check
         run: |
