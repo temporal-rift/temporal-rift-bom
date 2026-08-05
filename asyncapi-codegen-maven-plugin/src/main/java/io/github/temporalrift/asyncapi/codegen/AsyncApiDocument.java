@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Map;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 
 /** Parses an AsyncAPI 3 document and resolves both local and cross-file JSON References. */
@@ -34,16 +33,24 @@ final class AsyncApiDocument {
 
     record Message(String name, JsonNode payloadSchema) {}
 
-    /** All messages declared on the first channel, in declaration order. */
-    List<Message> messages() {
-        JsonNode channels = root.path("channels");
-        String firstChannelKey = channels.fieldNames().hasNext() ? channels.fieldNames().next() : null;
-        if (firstChannelKey == null) {
-            return List.of();
-        }
-        JsonNode channel = channels.path(firstChannelKey);
-        JsonNode channelMessages = channel.path("messages");
+    record Channel(String key, String address, List<Message> messages) {}
 
+    /** Every channel declared in the document, each with only its own messages, in declaration order. */
+    List<Channel> channels() {
+        JsonNode channels = root.path("channels");
+        List<Channel> result = new ArrayList<>();
+        var channelKeys = channels.fieldNames();
+        while (channelKeys.hasNext()) {
+            String channelKey = channelKeys.next();
+            JsonNode channel = channels.path(channelKey);
+            String address = channel.path("address").asText();
+            result.add(new Channel(channelKey, address, messagesOf(channel)));
+        }
+        return result;
+    }
+
+    private List<Message> messagesOf(JsonNode channel) {
+        JsonNode channelMessages = channel.path("messages");
         List<Message> messages = new ArrayList<>();
         var fieldNames = channelMessages.fieldNames();
         while (fieldNames.hasNext()) {
@@ -59,12 +66,6 @@ final class AsyncApiDocument {
 
     String title() {
         return root.path("info").path("title").asText("");
-    }
-
-    String channelAddress() {
-        JsonNode channels = root.path("channels");
-        String firstChannelKey = channels.fieldNames().hasNext() ? channels.fieldNames().next() : null;
-        return firstChannelKey == null ? null : channels.path(firstChannelKey).path("address").asText();
     }
 
     /** Resolves a possibly-$ref'd node against the file it was read from, following chained refs. */
@@ -111,10 +112,6 @@ final class AsyncApiDocument {
     /** The spec file this document was parsed from, for resolving refs relative to it. */
     Path specFile() {
         return specFile;
-    }
-
-    ObjectNode asObject() {
-        return (ObjectNode) root;
     }
 
     private static final class UncheckedIOExceptionWrapper extends RuntimeException {

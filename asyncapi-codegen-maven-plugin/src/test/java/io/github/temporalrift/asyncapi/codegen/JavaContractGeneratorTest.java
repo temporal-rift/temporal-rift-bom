@@ -19,11 +19,10 @@ class JavaContractGeneratorTest {
 
     @Test
     void generatesRealActionEventContractThatCompiles() throws IOException, URISyntaxException {
-        Path specFile = fixture("action-event/asyncapi/asyncapi.yml");
-
-        AsyncApiDocument document = AsyncApiDocument.parse(specFile);
-        String source = new JavaContractGenerator(document, "io.github.temporalrift.generated.asyncapi.actionevents")
-                .generate();
+        AsyncApiDocument document = AsyncApiDocument.parse(fixture("action-event/asyncapi/asyncapi.yml"));
+        AsyncApiDocument.Channel channel = onlyChannel(document);
+        String source = new JavaContractGenerator(document, "io.github.temporalrift.asyncapi.actionevents", "GeneratedChannelContract")
+                .generate(channel);
 
         assertThat(source).contains("public static final String CHANNEL = \"game.events\";");
         assertThat(source).contains("public static final String OUTPUT_BINDING = \"game-events-out\";");
@@ -47,7 +46,74 @@ class JavaContractGeneratorTest {
         assertThat(source).contains("CARD_PLAYED_EVENT_TYPE = \"CardPlayed\"");
         assertThat(source).contains("case CARD_PLAYED_EVENT_TYPE -> onCardPlayed(");
 
-        compileOrFail(source);
+        compileOrFail(source, "actionevents", "GeneratedChannelContract");
+    }
+
+    @Test
+    void generatesRealSessionEventContractThatCompiles() throws IOException, URISyntaxException {
+        AsyncApiDocument document = AsyncApiDocument.parse(fixture("session-event/asyncapi/asyncapi.yml"));
+        String source = new JavaContractGenerator(document, "io.github.temporalrift.asyncapi.sessionevents", "GeneratedChannelContract")
+                .generate(onlyChannel(document));
+        assertThat(source).contains("public record EventsDrawnFutureEvent(");
+        assertThat(source).contains("public record GameEndedPlayerScoreResult(");
+        compileOrFail(source, "sessionevents", "GeneratedChannelContract");
+    }
+
+    @Test
+    void generatesRealScoringEventContractThatCompiles() throws IOException, URISyntaxException {
+        AsyncApiDocument document = AsyncApiDocument.parse(fixture("scoring-event/asyncapi/asyncapi.yml"));
+        String source = new JavaContractGenerator(document, "io.github.temporalrift.asyncapi.scoringevents", "GeneratedChannelContract")
+                .generate(onlyChannel(document));
+        assertThat(source).contains("public record ScoreUpdate(");
+        compileOrFail(source, "scoringevents", "GeneratedChannelContract");
+    }
+
+    @Test
+    void generatesRealTimelineEventContractThatCompiles() throws IOException, URISyntaxException {
+        AsyncApiDocument document = AsyncApiDocument.parse(fixture("timeline-event/asyncapi/asyncapi.yml"));
+        String source = new JavaContractGenerator(document, "io.github.temporalrift.asyncapi.timelineevents", "GeneratedChannelContract")
+                .generate(onlyChannel(document));
+        assertThat(source).contains("public record EraResolutionCompletedPayload(");
+        compileOrFail(source, "timelineevents", "GeneratedChannelContract");
+    }
+
+    @Test
+    void generatesOneIndependentContractPerChannel() throws IOException, URISyntaxException {
+        AsyncApiDocument document = AsyncApiDocument.parse(fixture("multi-channel/asyncapi.yml"));
+        List<AsyncApiDocument.Channel> channels = document.channels();
+        assertThat(channels).hasSize(2);
+
+        AsyncApiDocument.Channel gameEvents = channels.get(0);
+        AsyncApiDocument.Channel timelineEvents = channels.get(1);
+        assertThat(gameEvents.address()).isEqualTo("game.events");
+        assertThat(timelineEvents.address()).isEqualTo("timeline.events");
+
+        String gameSource = new JavaContractGenerator(
+                        document, "io.github.temporalrift.asyncapi.multichannel", "GeneratedGameEventsContract")
+                .generate(gameEvents);
+        String timelineSource = new JavaContractGenerator(
+                        document, "io.github.temporalrift.asyncapi.multichannel", "GeneratedTimelineEventsContract")
+                .generate(timelineEvents);
+
+        assertThat(gameSource).contains("public final class GeneratedGameEventsContract {");
+        assertThat(gameSource).contains("CHANNEL = \"game.events\"");
+        assertThat(gameSource).contains("publishLobbyCreated(");
+        // a message that belongs only to the other channel must not leak in here
+        assertThat(gameSource).doesNotContain("ResolutionStarted");
+
+        assertThat(timelineSource).contains("public final class GeneratedTimelineEventsContract {");
+        assertThat(timelineSource).contains("CHANNEL = \"timeline.events\"");
+        assertThat(timelineSource).contains("publishResolutionStarted(");
+        assertThat(timelineSource).doesNotContain("LobbyCreated");
+
+        compileOrFail(gameSource, "multichannel", "GeneratedGameEventsContract");
+        compileOrFail(timelineSource, "multichannel", "GeneratedTimelineEventsContract");
+    }
+
+    private static AsyncApiDocument.Channel onlyChannel(AsyncApiDocument document) {
+        List<AsyncApiDocument.Channel> channels = document.channels();
+        assertThat(channels).hasSize(1);
+        return channels.get(0);
     }
 
     private static Path fixture(String relativePath) throws URISyntaxException {
@@ -56,11 +122,11 @@ class JavaContractGeneratorTest {
         return Path.of(resource.toURI());
     }
 
-    private static void compileOrFail(String source) throws IOException {
+    private static void compileOrFail(String source, String specPackage, String className) throws IOException {
         Path tempDir = Files.createTempDirectory("asyncapi-codegen-test");
-        Path packageDir = tempDir.resolve("io/github/temporalrift/generated/asyncapi/actionevents");
+        Path packageDir = tempDir.resolve("io/github/temporalrift/asyncapi/" + specPackage);
         Files.createDirectories(packageDir);
-        Path sourceFile = packageDir.resolve("GeneratedChannelContract.java");
+        Path sourceFile = packageDir.resolve(className + ".java");
         Files.writeString(sourceFile, source);
 
         JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();

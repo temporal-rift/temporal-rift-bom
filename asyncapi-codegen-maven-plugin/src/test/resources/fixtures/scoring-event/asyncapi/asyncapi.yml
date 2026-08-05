@@ -1,0 +1,58 @@
+asyncapi: 3.0.0
+info:
+  title: Scoring events
+  version: 1.0.0
+  description: Scoring module domain events published to game.events
+
+servers:
+  kafka:
+    host: localhost:9092
+    protocol: kafka
+
+channels:
+  gameEvents:
+    address: game.events
+    messages:
+      scoresUpdated:
+        $ref: '#/components/messages/ScoresUpdated'
+
+operations:
+  publishScoresUpdated:
+    action: send
+    channel: { $ref: '#/channels/gameEvents' }
+    messages: [ { $ref: '#/channels/gameEvents/messages/scoresUpdated' } ]
+
+components:
+  messages:
+    ScoresUpdated:
+      name: ScoresUpdated
+      title: Scores updated
+      headers: { $ref: '#/components/schemas/EventEnvelopeHeaders' }
+      payload: { $ref: '#/components/schemas/ScoresUpdatedPayload' }
+
+  schemas:
+    EventEnvelopeHeaders:
+      $ref: './shared/envelope-headers.yaml#/EventEnvelopeHeaders'
+
+    Faction:
+      $ref: './shared/enums.yaml#/Faction'
+
+    ScoreUpdate:
+      type: object
+      properties:
+        playerId: { type: string, format: uuid }
+        faction: { $ref: '#/components/schemas/Faction' }
+        pointsDelta: { type: integer }
+        reason: { type: string }
+        newTotal: { type: integer }
+      required: [ playerId, faction, pointsDelta, reason, newTotal ]
+
+    ScoresUpdatedPayload:
+      type: object
+      properties:
+        gameId: { type: string, format: uuid }
+        eraNumber: { type: integer }
+        updates:
+          type: array
+          items: { $ref: '#/components/schemas/ScoreUpdate' }
+      required: [ gameId, eraNumber, updates ]

@@ -1,0 +1,421 @@
+asyncapi: 3.0.0
+info:
+  title: Timeline events
+  version: 1.0.2
+  description: Timeline service domain events published to timeline.events
+
+servers:
+  kafka:
+    host: localhost:9092
+    protocol: kafka
+
+channels:
+  timelineEvents:
+    address: timeline.events
+    messages:
+      resolutionStarted:
+        $ref: '#/components/messages/ResolutionStarted'
+      probabilityStateCalculated:
+        $ref: '#/components/messages/ProbabilityStateCalculated'
+      bandedProbabilityPublished:
+        $ref: '#/components/messages/BandedProbabilityPublished'
+      paradoxDetected:
+        $ref: '#/components/messages/ParadoxDetected'
+      paradoxResolutionPhaseStarted:
+        $ref: '#/components/messages/ParadoxResolutionPhaseStarted'
+      paradoxResolutionCardPlayed:
+        $ref: '#/components/messages/ParadoxResolutionCardPlayed'
+      paradoxResolved:
+        $ref: '#/components/messages/ParadoxResolved'
+      paradoxCascaded:
+        $ref: '#/components/messages/ParadoxCascaded'
+      outcomeApplied:
+        $ref: '#/components/messages/OutcomeApplied'
+      eraResolutionCompleted:
+        $ref: '#/components/messages/EraResolutionCompleted'
+      chainLinkAdded:
+        $ref: '#/components/messages/ChainLinkAdded'
+      chainCompleted:
+        $ref: '#/components/messages/ChainCompleted'
+      chainBroken:
+        $ref: '#/components/messages/ChainBroken'
+
+operations:
+  publishResolutionStarted:
+    action: send
+    channel: { $ref: '#/channels/timelineEvents' }
+    messages: [ { $ref: '#/channels/timelineEvents/messages/resolutionStarted' } ]
+  publishProbabilityStateCalculated:
+    action: send
+    channel: { $ref: '#/channels/timelineEvents' }
+    messages: [ { $ref: '#/channels/timelineEvents/messages/probabilityStateCalculated' } ]
+  publishBandedProbabilityPublished:
+    action: send
+    channel: { $ref: '#/channels/timelineEvents' }
+    messages: [ { $ref: '#/channels/timelineEvents/messages/bandedProbabilityPublished' } ]
+  publishParadoxDetected:
+    action: send
+    channel: { $ref: '#/channels/timelineEvents' }
+    messages: [ { $ref: '#/channels/timelineEvents/messages/paradoxDetected' } ]
+  publishParadoxResolutionPhaseStarted:
+    action: send
+    channel: { $ref: '#/channels/timelineEvents' }
+    messages: [ { $ref: '#/channels/timelineEvents/messages/paradoxResolutionPhaseStarted' } ]
+  publishParadoxResolutionCardPlayed:
+    action: send
+    channel: { $ref: '#/channels/timelineEvents' }
+    messages: [ { $ref: '#/channels/timelineEvents/messages/paradoxResolutionCardPlayed' } ]
+  publishParadoxResolved:
+    action: send
+    channel: { $ref: '#/channels/timelineEvents' }
+    messages: [ { $ref: '#/channels/timelineEvents/messages/paradoxResolved' } ]
+  publishParadoxCascaded:
+    action: send
+    channel: { $ref: '#/channels/timelineEvents' }
+    messages: [ { $ref: '#/channels/timelineEvents/messages/paradoxCascaded' } ]
+  publishOutcomeApplied:
+    action: send
+    channel: { $ref: '#/channels/timelineEvents' }
+    messages: [ { $ref: '#/channels/timelineEvents/messages/outcomeApplied' } ]
+  publishEraResolutionCompleted:
+    action: send
+    channel: { $ref: '#/channels/timelineEvents' }
+    messages: [ { $ref: '#/channels/timelineEvents/messages/eraResolutionCompleted' } ]
+  publishChainLinkAdded:
+    action: send
+    channel: { $ref: '#/channels/timelineEvents' }
+    messages: [ { $ref: '#/channels/timelineEvents/messages/chainLinkAdded' } ]
+  publishChainCompleted:
+    action: send
+    channel: { $ref: '#/channels/timelineEvents' }
+    messages: [ { $ref: '#/channels/timelineEvents/messages/chainCompleted' } ]
+  publishChainBroken:
+    action: send
+    channel: { $ref: '#/channels/timelineEvents' }
+    messages: [ { $ref: '#/channels/timelineEvents/messages/chainBroken' } ]
+
+components:
+  messages:
+    ResolutionStarted:
+      name: ResolutionStarted
+      title: Resolution started
+      headers: { $ref: '#/components/schemas/EventEnvelopeHeaders' }
+      payload: { $ref: '#/components/schemas/ResolutionStartedPayload' }
+    ProbabilityStateCalculated:
+      name: ProbabilityStateCalculated
+      title: Probability state calculated
+      headers: { $ref: '#/components/schemas/EventEnvelopeHeaders' }
+      payload: { $ref: '#/components/schemas/ProbabilityStateCalculatedPayload' }
+    BandedProbabilityPublished:
+      name: BandedProbabilityPublished
+      title: Banded probability published
+      headers: { $ref: '#/components/schemas/EventEnvelopeHeaders' }
+      payload: { $ref: '#/components/schemas/BandedProbabilityPublishedPayload' }
+    ParadoxDetected:
+      name: ParadoxDetected
+      title: Paradox detected
+      headers: { $ref: '#/components/schemas/EventEnvelopeHeaders' }
+      payload: { $ref: '#/components/schemas/ParadoxDetectedPayload' }
+    ParadoxResolutionPhaseStarted:
+      name: ParadoxResolutionPhaseStarted
+      title: Paradox resolution phase started
+      headers: { $ref: '#/components/schemas/EventEnvelopeHeaders' }
+      payload: { $ref: '#/components/schemas/ParadoxResolutionPhaseStartedPayload' }
+    ParadoxResolutionCardPlayed:
+      name: ParadoxResolutionCardPlayed
+      title: Paradox resolution card played
+      headers: { $ref: '#/components/schemas/EventEnvelopeHeaders' }
+      payload: { $ref: '#/components/schemas/ParadoxResolutionCardPlayedPayload' }
+    ParadoxResolved:
+      name: ParadoxResolved
+      title: Paradox resolved
+      headers: { $ref: '#/components/schemas/EventEnvelopeHeaders' }
+      payload: { $ref: '#/components/schemas/ParadoxResolvedPayload' }
+    ParadoxCascaded:
+      name: ParadoxCascaded
+      title: Paradox cascaded
+      headers: { $ref: '#/components/schemas/EventEnvelopeHeaders' }
+      payload: { $ref: '#/components/schemas/ParadoxCascadedPayload' }
+    OutcomeApplied:
+      name: OutcomeApplied
+      title: Outcome applied
+      headers: { $ref: '#/components/schemas/EventEnvelopeHeaders' }
+      payload: { $ref: '#/components/schemas/OutcomeAppliedPayload' }
+    EraResolutionCompleted:
+      name: EraResolutionCompleted
+      title: Era resolution completed
+      description: >-
+        The ordered terminal-resolution barrier for an era. It is emitted once after all individual
+        OutcomeApplied and ParadoxCascaded facts for that era are durably produced. It is service
+        coordination data and is not a standalone player notification.
+      headers: { $ref: '#/components/schemas/EventEnvelopeHeaders' }
+      payload: { $ref: '#/components/schemas/EraResolutionCompletedPayload' }
+    ChainLinkAdded:
+      name: ChainLinkAdded
+      title: Chain link added
+      headers: { $ref: '#/components/schemas/EventEnvelopeHeaders' }
+      payload: { $ref: '#/components/schemas/ChainLinkAddedPayload' }
+    ChainCompleted:
+      name: ChainCompleted
+      title: Chain completed
+      headers: { $ref: '#/components/schemas/EventEnvelopeHeaders' }
+      payload: { $ref: '#/components/schemas/ChainCompletedPayload' }
+    ChainBroken:
+      name: ChainBroken
+      title: Chain broken
+      headers: { $ref: '#/components/schemas/EventEnvelopeHeaders' }
+      payload: { $ref: '#/components/schemas/ChainBrokenPayload' }
+
+  schemas:
+    EventEnvelopeHeaders:
+      $ref: './shared/envelope-headers.yaml#/EventEnvelopeHeaders'
+
+    ResolutionStartedPayload:
+      type: object
+      properties:
+        gameId: { type: string, format: uuid }
+        eraNumber: { type: integer }
+      required: [ gameId, eraNumber ]
+
+    ProbabilityStateCalculatedOutcomeState:
+      type: object
+      properties:
+        outcomeId: { type: string, format: uuid }
+        probability: { type: integer }
+        isAnnihilated: { type: boolean }
+        isSealed: { type: boolean }
+      required: [ outcomeId, probability, isAnnihilated, isSealed ]
+
+    ProbabilityStateCalculatedEventState:
+      type: object
+      properties:
+        eventId: { type: string, format: uuid }
+        outcomes:
+          type: array
+          items: { $ref: '#/components/schemas/ProbabilityStateCalculatedOutcomeState' }
+      required: [ eventId, outcomes ]
+
+    ProbabilityStateCalculatedPayload:
+      type: object
+      properties:
+        gameId: { type: string, format: uuid }
+        eraNumber: { type: integer }
+        eventStates:
+          type: array
+          items: { $ref: '#/components/schemas/ProbabilityStateCalculatedEventState' }
+      required: [ gameId, eraNumber, eventStates ]
+
+    ProbabilityBand:
+      $ref: './shared/enums.yaml#/ProbabilityBand'
+
+    BandedProbabilityPublishedOutcomeBandState:
+      type: object
+      properties:
+        outcomeId: { type: string, format: uuid }
+        band: { $ref: '#/components/schemas/ProbabilityBand' }
+      required: [ outcomeId, band ]
+
+    BandedProbabilityPublishedEventBandState:
+      type: object
+      properties:
+        eventId: { type: string, format: uuid }
+        outcomes:
+          type: array
+          items: { $ref: '#/components/schemas/BandedProbabilityPublishedOutcomeBandState' }
+      required: [ eventId, outcomes ]
+
+    BandedProbabilityPublishedPayload:
+      type: object
+      properties:
+        gameId: { type: string, format: uuid }
+        eraNumber: { type: integer }
+        eventStates:
+          type: array
+          items: { $ref: '#/components/schemas/BandedProbabilityPublishedEventBandState' }
+      required: [ gameId, eraNumber, eventStates ]
+
+    ParadoxType:
+      $ref: './shared/enums.yaml#/ParadoxType'
+
+    ParadoxDetectedParadox:
+      type: object
+      properties:
+        paradoxId: { type: string, format: uuid }
+        type: { $ref: '#/components/schemas/ParadoxType' }
+        affectedEventId: { type: string, format: uuid }
+        affectedOutcomeIds:
+          type: array
+          items: { type: string, format: uuid }
+        description: { type: string }
+      required: [ paradoxId, type, affectedEventId, affectedOutcomeIds, description ]
+
+    ParadoxDetectedPayload:
+      type: object
+      properties:
+        gameId: { type: string, format: uuid }
+        eraNumber: { type: integer }
+        paradoxes:
+          type: array
+          items: { $ref: '#/components/schemas/ParadoxDetectedParadox' }
+      required: [ gameId, eraNumber, paradoxes ]
+
+    ParadoxResolutionPhaseStartedPayload:
+      type: object
+      properties:
+        gameId: { type: string, format: uuid }
+        eraNumber: { type: integer }
+        paradoxIds:
+          type: array
+          items: { type: string, format: uuid }
+        timerSeconds: { type: integer }
+      required: [ gameId, eraNumber, paradoxIds, timerSeconds ]
+
+    CardType:
+      $ref: './shared/enums.yaml#/CardType'
+
+    ParadoxResolutionCardPlayedPayload:
+      type: object
+      properties:
+        gameId: { type: string, format: uuid }
+        eraNumber: { type: integer }
+        playerId: { type: string, format: uuid }
+        cardInstanceId: { type: string, format: uuid }
+        cardType: { $ref: '#/components/schemas/CardType' }
+        targetEventId: { type: string, format: uuid }
+        targetOutcomeId: { type: string, format: uuid }
+      required: [ gameId, eraNumber, playerId, cardInstanceId, cardType, targetEventId, targetOutcomeId ]
+
+    ParadoxResolvedPayload:
+      type: object
+      properties:
+        gameId: { type: string, format: uuid }
+        eraNumber: { type: integer }
+        paradoxId: { type: string, format: uuid }
+        resolvedByPlayerId: { type: string, format: uuid }
+      required: [ gameId, eraNumber, paradoxId, resolvedByPlayerId ]
+
+    ParadoxCascadedProbabilityState:
+      type: object
+      properties:
+        outcomeId: { type: string, format: uuid }
+        probability: { type: integer }
+      required: [ outcomeId, probability ]
+
+    ParadoxCascadedPayload:
+      type: object
+      properties:
+        gameId: { type: string, format: uuid }
+        eraNumber: { type: integer }
+        paradoxId: { type: string, format: uuid }
+        affectedEventId: { type: string, format: uuid }
+        carryForwardProbabilityState:
+          type: array
+          items: { $ref: '#/components/schemas/ParadoxCascadedProbabilityState' }
+      required: [ gameId, eraNumber, paradoxId, affectedEventId, carryForwardProbabilityState ]
+
+    OutcomeAppliedProbabilityState:
+      type: object
+      properties:
+        outcomeId: { type: string, format: uuid }
+        probability: { type: integer }
+      required: [ outcomeId, probability ]
+
+    OutcomeAppliedPayload:
+      type: object
+      properties:
+        gameId: { type: string, format: uuid }
+        eraNumber: { type: integer }
+        eventId: { type: string, format: uuid }
+        winningOutcomeId: { type: string, format: uuid }
+        finalProbabilities:
+          type: array
+          items: { $ref: '#/components/schemas/OutcomeAppliedProbabilityState' }
+      required: [ gameId, eraNumber, eventId, winningOutcomeId, finalProbabilities ]
+
+    EraResolutionTerminalState:
+      type: string
+      enum: [ OUTCOME_APPLIED, CASCADED ]
+
+    EraTerminalResolution:
+      description: >-
+        One terminal result. revealIndex is the zero-based index of eventId in the source
+        EventsDrawn.events list. The terminalResolutions array MUST use those same ascending indexes.
+      oneOf:
+        - type: object
+          description: A resolved event with its winning outcome.
+          properties:
+            eventId: { type: string, format: uuid }
+            revealIndex: { type: integer, minimum: 0 }
+            terminalState: { type: string, const: OUTCOME_APPLIED }
+            winningOutcomeId: { type: string, format: uuid }
+          required: [ eventId, revealIndex, terminalState, winningOutcomeId ]
+        - type: object
+          description: A cascaded event, which has no winning outcome.
+          properties:
+            eventId: { type: string, format: uuid }
+            revealIndex: { type: integer, minimum: 0 }
+            terminalState: { type: string, const: CASCADED }
+          required: [ eventId, revealIndex, terminalState ]
+          not:
+            required: [ winningOutcomeId ]
+
+    EraResolutionCompletedPayload:
+      type: object
+      description: >-
+        Contains every active event for the era exactly once, in the EventsDrawn.events reveal order,
+        including carried-over events. Each revealIndex MUST equal the entry's zero-based source-list index,
+        and the array MUST use those indexes in ascending order. Producers and consumers validate these
+        invariants; JSON Schema cannot compare this message to the separate EventsDrawn payload. Consumers
+        use this barrier rather than individual cascade arrival order to determine timeline collapse and
+        completed scoring input.
+      properties:
+        gameId: { type: string, format: uuid }
+        eraNumber: { type: integer }
+        terminalResolutions:
+          type: array
+          minItems: 1
+          items: { $ref: '#/components/schemas/EraTerminalResolution' }
+      required: [ gameId, eraNumber, terminalResolutions ]
+
+    ChainLinkAddedPayload:
+      type: object
+      properties:
+        gameId: { type: string, format: uuid }
+        chainId: { type: string, format: uuid }
+        playerId: { type: string, format: uuid }
+        linkedEventId: { type: string, format: uuid }
+        linkedOutcomeId: { type: string, format: uuid }
+        chainLength: { type: integer }
+        previousLinkEventId: { type: string, format: uuid }
+      required: [ gameId, chainId, playerId, linkedEventId, linkedOutcomeId, chainLength ]
+
+    ChainCompletedChainLink:
+      type: object
+      properties:
+        eventId: { type: string, format: uuid }
+        outcomeId: { type: string, format: uuid }
+        eraNumber: { type: integer }
+      required: [ eventId, outcomeId, eraNumber ]
+
+    ChainCompletedPayload:
+      type: object
+      properties:
+        gameId: { type: string, format: uuid }
+        eraNumber: { type: integer }
+        chainId: { type: string, format: uuid }
+        playerId: { type: string, format: uuid }
+        links:
+          type: array
+          items: { $ref: '#/components/schemas/ChainCompletedChainLink' }
+      required: [ gameId, eraNumber, chainId, playerId, links ]
+
+    ChainBrokenPayload:
+      type: object
+      properties:
+        gameId: { type: string, format: uuid }
+        eraNumber: { type: integer }
+        chainId: { type: string, format: uuid }
+        brokenByPlayerId: { type: string, format: uuid }
+        targetPlayerId: { type: string, format: uuid }
+        chainLengthAtBreak: { type: integer }
+      required: [ gameId, eraNumber, chainId, brokenByPlayerId, targetPlayerId, chainLengthAtBreak ]

@@ -1,0 +1,566 @@
+asyncapi: 3.0.0
+info:
+  title: Session events
+  version: 1.0.0
+  description: Session module domain events published to game.events
+
+servers:
+  kafka:
+    host: localhost:9092
+    protocol: kafka
+
+channels:
+  gameEvents:
+    address: game.events
+    messages:
+      lobbyCreated:
+        $ref: '#/components/messages/LobbyCreated'
+      playerJoinedLobby:
+        $ref: '#/components/messages/PlayerJoinedLobby'
+      playerLeftLobby:
+        $ref: '#/components/messages/PlayerLeftLobby'
+      hostTransferred:
+        $ref: '#/components/messages/HostTransferred'
+      lobbyClosed:
+        $ref: '#/components/messages/LobbyClosed'
+      factionsDrawn:
+        $ref: '#/components/messages/FactionsDrawn'
+      factionAssigned:
+        $ref: '#/components/messages/FactionAssigned'
+      gameStarted:
+        $ref: '#/components/messages/GameStarted'
+      gameStartFailed:
+        $ref: '#/components/messages/GameStartFailed'
+      gameStartCancelled:
+        $ref: '#/components/messages/GameStartCancelled'
+      playerDisconnected:
+        $ref: '#/components/messages/PlayerDisconnected'
+      playerAbandoned:
+        $ref: '#/components/messages/PlayerAbandoned'
+      eraStarted:
+        $ref: '#/components/messages/EraStarted'
+      eraEnded:
+        $ref: '#/components/messages/EraEnded'
+      eraFailed:
+        $ref: '#/components/messages/EraFailed'
+      gameEndedAbnormally:
+        $ref: '#/components/messages/GameEndedAbnormally'
+      gameEnded:
+        $ref: '#/components/messages/GameEnded'
+      timelineCollapsed:
+        $ref: '#/components/messages/TimelineCollapsed'
+      timelineStabilized:
+        $ref: '#/components/messages/TimelineStabilized'
+      winConditionMet:
+        $ref: '#/components/messages/WinConditionMet'
+      factionRevealed:
+        $ref: '#/components/messages/FactionRevealed'
+      eventsDrawn:
+        $ref: '#/components/messages/EventsDrawn'
+      handDealt:
+        $ref: '#/components/messages/HandDealt'
+      resolutionStarted:
+        $ref: '#/components/messages/ResolutionStarted'
+
+operations:
+  publishLobbyCreated:
+    action: send
+    channel: { $ref: '#/channels/gameEvents' }
+    messages: [ { $ref: '#/channels/gameEvents/messages/lobbyCreated' } ]
+  publishPlayerJoinedLobby:
+    action: send
+    channel: { $ref: '#/channels/gameEvents' }
+    messages: [ { $ref: '#/channels/gameEvents/messages/playerJoinedLobby' } ]
+  publishPlayerLeftLobby:
+    action: send
+    channel: { $ref: '#/channels/gameEvents' }
+    messages: [ { $ref: '#/channels/gameEvents/messages/playerLeftLobby' } ]
+  publishHostTransferred:
+    action: send
+    channel: { $ref: '#/channels/gameEvents' }
+    messages: [ { $ref: '#/channels/gameEvents/messages/hostTransferred' } ]
+  publishLobbyClosed:
+    action: send
+    channel: { $ref: '#/channels/gameEvents' }
+    messages: [ { $ref: '#/channels/gameEvents/messages/lobbyClosed' } ]
+  publishFactionsDrawn:
+    action: send
+    channel: { $ref: '#/channels/gameEvents' }
+    messages: [ { $ref: '#/channels/gameEvents/messages/factionsDrawn' } ]
+  publishFactionAssigned:
+    action: send
+    channel: { $ref: '#/channels/gameEvents' }
+    messages: [ { $ref: '#/channels/gameEvents/messages/factionAssigned' } ]
+  publishGameStarted:
+    action: send
+    channel: { $ref: '#/channels/gameEvents' }
+    messages: [ { $ref: '#/channels/gameEvents/messages/gameStarted' } ]
+  publishGameStartFailed:
+    action: send
+    channel: { $ref: '#/channels/gameEvents' }
+    messages: [ { $ref: '#/channels/gameEvents/messages/gameStartFailed' } ]
+  publishGameStartCancelled:
+    action: send
+    channel: { $ref: '#/channels/gameEvents' }
+    messages: [ { $ref: '#/channels/gameEvents/messages/gameStartCancelled' } ]
+  publishPlayerDisconnected:
+    action: send
+    channel: { $ref: '#/channels/gameEvents' }
+    messages: [ { $ref: '#/channels/gameEvents/messages/playerDisconnected' } ]
+  publishPlayerAbandoned:
+    action: send
+    channel: { $ref: '#/channels/gameEvents' }
+    messages: [ { $ref: '#/channels/gameEvents/messages/playerAbandoned' } ]
+  publishEraStarted:
+    action: send
+    channel: { $ref: '#/channels/gameEvents' }
+    messages: [ { $ref: '#/channels/gameEvents/messages/eraStarted' } ]
+  publishEraEnded:
+    action: send
+    channel: { $ref: '#/channels/gameEvents' }
+    messages: [ { $ref: '#/channels/gameEvents/messages/eraEnded' } ]
+  publishEraFailed:
+    action: send
+    channel: { $ref: '#/channels/gameEvents' }
+    messages: [ { $ref: '#/channels/gameEvents/messages/eraFailed' } ]
+  publishGameEndedAbnormally:
+    action: send
+    channel: { $ref: '#/channels/gameEvents' }
+    messages: [ { $ref: '#/channels/gameEvents/messages/gameEndedAbnormally' } ]
+  publishGameEnded:
+    action: send
+    channel: { $ref: '#/channels/gameEvents' }
+    messages: [ { $ref: '#/channels/gameEvents/messages/gameEnded' } ]
+  publishTimelineCollapsed:
+    action: send
+    channel: { $ref: '#/channels/gameEvents' }
+    messages: [ { $ref: '#/channels/gameEvents/messages/timelineCollapsed' } ]
+  publishTimelineStabilized:
+    action: send
+    channel: { $ref: '#/channels/gameEvents' }
+    messages: [ { $ref: '#/channels/gameEvents/messages/timelineStabilized' } ]
+  publishWinConditionMet:
+    action: send
+    channel: { $ref: '#/channels/gameEvents' }
+    messages: [ { $ref: '#/channels/gameEvents/messages/winConditionMet' } ]
+  publishFactionRevealed:
+    action: send
+    channel: { $ref: '#/channels/gameEvents' }
+    messages: [ { $ref: '#/channels/gameEvents/messages/factionRevealed' } ]
+  publishEventsDrawn:
+    action: send
+    channel: { $ref: '#/channels/gameEvents' }
+    messages: [ { $ref: '#/channels/gameEvents/messages/eventsDrawn' } ]
+  publishHandDealt:
+    action: send
+    channel: { $ref: '#/channels/gameEvents' }
+    messages: [ { $ref: '#/channels/gameEvents/messages/handDealt' } ]
+  publishResolutionStarted:
+    action: send
+    channel: { $ref: '#/channels/gameEvents' }
+    messages: [ { $ref: '#/channels/gameEvents/messages/resolutionStarted' } ]
+
+components:
+  messages:
+    LobbyCreated:
+      name: LobbyCreated
+      title: Lobby created
+      headers: { $ref: '#/components/schemas/EventEnvelopeHeaders' }
+      payload: { $ref: '#/components/schemas/LobbyCreatedPayload' }
+    PlayerJoinedLobby:
+      name: PlayerJoinedLobby
+      title: Player joined lobby
+      headers: { $ref: '#/components/schemas/EventEnvelopeHeaders' }
+      payload: { $ref: '#/components/schemas/PlayerJoinedLobbyPayload' }
+    PlayerLeftLobby:
+      name: PlayerLeftLobby
+      title: Player left lobby
+      headers: { $ref: '#/components/schemas/EventEnvelopeHeaders' }
+      payload: { $ref: '#/components/schemas/PlayerLeftLobbyPayload' }
+    HostTransferred:
+      name: HostTransferred
+      title: Host transferred
+      headers: { $ref: '#/components/schemas/EventEnvelopeHeaders' }
+      payload: { $ref: '#/components/schemas/HostTransferredPayload' }
+    LobbyClosed:
+      name: LobbyClosed
+      title: Lobby closed
+      headers: { $ref: '#/components/schemas/EventEnvelopeHeaders' }
+      payload: { $ref: '#/components/schemas/LobbyClosedPayload' }
+    FactionsDrawn:
+      name: FactionsDrawn
+      title: Factions drawn
+      headers: { $ref: '#/components/schemas/EventEnvelopeHeaders' }
+      payload: { $ref: '#/components/schemas/FactionsDrawnPayload' }
+    FactionAssigned:
+      name: FactionAssigned
+      title: Faction assigned
+      headers: { $ref: '#/components/schemas/EventEnvelopeHeaders' }
+      payload: { $ref: '#/components/schemas/FactionAssignedPayload' }
+    GameStarted:
+      name: GameStarted
+      title: Game started
+      headers: { $ref: '#/components/schemas/EventEnvelopeHeaders' }
+      payload: { $ref: '#/components/schemas/GameStartedPayload' }
+    GameStartFailed:
+      name: GameStartFailed
+      title: Game start failed
+      headers: { $ref: '#/components/schemas/EventEnvelopeHeaders' }
+      payload: { $ref: '#/components/schemas/GameStartFailedPayload' }
+    GameStartCancelled:
+      name: GameStartCancelled
+      title: Game start cancelled
+      headers: { $ref: '#/components/schemas/EventEnvelopeHeaders' }
+      payload: { $ref: '#/components/schemas/GameStartCancelledPayload' }
+    PlayerDisconnected:
+      name: PlayerDisconnected
+      title: Player disconnected
+      headers: { $ref: '#/components/schemas/EventEnvelopeHeaders' }
+      payload: { $ref: '#/components/schemas/PlayerDisconnectedPayload' }
+    PlayerAbandoned:
+      name: PlayerAbandoned
+      title: Player abandoned
+      headers: { $ref: '#/components/schemas/EventEnvelopeHeaders' }
+      payload: { $ref: '#/components/schemas/PlayerAbandonedPayload' }
+    EraStarted:
+      name: EraStarted
+      title: Era started
+      headers: { $ref: '#/components/schemas/EventEnvelopeHeaders' }
+      payload: { $ref: '#/components/schemas/EraStartedPayload' }
+    EraEnded:
+      name: EraEnded
+      title: Era ended
+      headers: { $ref: '#/components/schemas/EventEnvelopeHeaders' }
+      payload: { $ref: '#/components/schemas/EraEndedPayload' }
+    EraFailed:
+      name: EraFailed
+      title: Era failed
+      headers: { $ref: '#/components/schemas/EventEnvelopeHeaders' }
+      payload: { $ref: '#/components/schemas/EraFailedPayload' }
+    GameEndedAbnormally:
+      name: GameEndedAbnormally
+      title: Game ended abnormally
+      headers: { $ref: '#/components/schemas/EventEnvelopeHeaders' }
+      payload: { $ref: '#/components/schemas/GameEndedAbnormallyPayload' }
+    GameEnded:
+      name: GameEnded
+      title: Game ended
+      headers: { $ref: '#/components/schemas/EventEnvelopeHeaders' }
+      payload: { $ref: '#/components/schemas/GameEndedPayload' }
+    TimelineCollapsed:
+      name: TimelineCollapsed
+      title: Timeline collapsed
+      headers: { $ref: '#/components/schemas/EventEnvelopeHeaders' }
+      payload: { $ref: '#/components/schemas/TimelineCollapsedPayload' }
+    TimelineStabilized:
+      name: TimelineStabilized
+      title: Timeline stabilized
+      headers: { $ref: '#/components/schemas/EventEnvelopeHeaders' }
+      payload: { $ref: '#/components/schemas/TimelineStabilizedPayload' }
+    WinConditionMet:
+      name: WinConditionMet
+      title: Win condition met
+      headers: { $ref: '#/components/schemas/EventEnvelopeHeaders' }
+      payload: { $ref: '#/components/schemas/WinConditionMetPayload' }
+    FactionRevealed:
+      name: FactionRevealed
+      title: Faction revealed
+      headers: { $ref: '#/components/schemas/EventEnvelopeHeaders' }
+      payload: { $ref: '#/components/schemas/FactionRevealedPayload' }
+    EventsDrawn:
+      name: EventsDrawn
+      title: Events drawn
+      headers: { $ref: '#/components/schemas/EventEnvelopeHeaders' }
+      payload: { $ref: '#/components/schemas/EventsDrawnPayload' }
+    HandDealt:
+      name: HandDealt
+      title: Hand dealt
+      headers: { $ref: '#/components/schemas/EventEnvelopeHeaders' }
+      payload: { $ref: '#/components/schemas/HandDealtPayload' }
+    ResolutionStarted:
+      name: ResolutionStarted
+      title: Resolution started
+      headers: { $ref: '#/components/schemas/EventEnvelopeHeaders' }
+      payload: { $ref: '#/components/schemas/ResolutionStartedPayload' }
+
+  schemas:
+    EventEnvelopeHeaders:
+      $ref: './shared/envelope-headers.yaml#/EventEnvelopeHeaders'
+
+    LobbyCreatedPayload:
+      type: object
+      properties:
+        lobbyId: { type: string, format: uuid }
+        hostPlayerId: { type: string, format: uuid }
+        createdAt: { type: string, format: date-time }
+      required: [ lobbyId, hostPlayerId, createdAt ]
+
+    PlayerJoinedLobbyPayload:
+      type: object
+      properties:
+        lobbyId: { type: string, format: uuid }
+        playerId: { type: string, format: uuid }
+        playerName: { type: string }
+      required: [ lobbyId, playerId, playerName ]
+
+    PlayerLeftLobbyPayload:
+      type: object
+      properties:
+        lobbyId: { type: string, format: uuid }
+        playerId: { type: string, format: uuid }
+      required: [ lobbyId, playerId ]
+
+    HostTransferredPayload:
+      type: object
+      properties:
+        lobbyId: { type: string, format: uuid }
+        previousHostId: { type: string, format: uuid }
+        newHostId: { type: string, format: uuid }
+      required: [ lobbyId, previousHostId, newHostId ]
+
+    LobbyClosedPayload:
+      type: object
+      properties:
+        lobbyId: { type: string, format: uuid }
+        gameId: { type: string, format: uuid }
+      required: [ lobbyId, gameId ]
+
+    FactionsDrawnPayload:
+      type: object
+      properties:
+        gameId: { type: string, format: uuid }
+        lobbyId: { type: string, format: uuid }
+        factions:
+          type: array
+          items: { $ref: '#/components/schemas/Faction' }
+      required: [ gameId, lobbyId, factions ]
+
+    FactionAssignedPayload:
+      type: object
+      properties:
+        gameId: { type: string, format: uuid }
+        playerId: { type: string, format: uuid }
+        faction: { $ref: '#/components/schemas/Faction' }
+      required: [ gameId, playerId, faction ]
+
+    GameStartedPayload:
+      type: object
+      properties:
+        gameId: { type: string, format: uuid }
+        lobbyId: { type: string, format: uuid }
+        playerIds:
+          type: array
+          items: { type: string, format: uuid }
+        totalFactions: { type: integer }
+        deckSize: { type: integer }
+      required: [ gameId, lobbyId, playerIds, totalFactions, deckSize ]
+
+    GameStartFailedPayload:
+      type: object
+      properties:
+        gameId: { type: string, format: uuid }
+        lobbyId: { type: string, format: uuid }
+        reason: { type: string }
+      required: [ gameId, lobbyId, reason ]
+
+    GameStartCancelledPayload:
+      type: object
+      properties:
+        gameId: { type: string, format: uuid }
+        lobbyId: { type: string, format: uuid }
+      required: [ gameId, lobbyId ]
+
+    PlayerDisconnectedPayload:
+      type: object
+      properties:
+        gameId: { type: string, format: uuid }
+        playerId: { type: string, format: uuid }
+      required: [ gameId, playerId ]
+
+    PlayerAbandonedPayload:
+      type: object
+      properties:
+        gameId: { type: string, format: uuid }
+        playerId: { type: string, format: uuid }
+      required: [ gameId, playerId ]
+
+    EraStartedPayload:
+      type: object
+      properties:
+        gameId: { type: string, format: uuid }
+        eraNumber: { type: integer }
+        cascadedEventIds:
+          type: array
+          items: { type: string, format: uuid }
+        playerIds:
+          type: array
+          items: { type: string, format: uuid }
+      required: [ gameId, eraNumber, cascadedEventIds, playerIds ]
+
+    EraEndedPayload:
+      type: object
+      properties:
+        gameId: { type: string, format: uuid }
+        eraNumber: { type: integer }
+        cascadedParadoxCount: { type: integer }
+        nextEraNumber: { type: integer }
+      required: [ gameId, eraNumber, cascadedParadoxCount, nextEraNumber ]
+
+    EraFailedPayload:
+      type: object
+      properties:
+        gameId: { type: string, format: uuid }
+        eraNumber: { type: integer }
+        reason: { type: string }
+      required: [ gameId, eraNumber, reason ]
+
+    GameEndedAbnormallyPayload:
+      type: object
+      properties:
+        gameId: { type: string, format: uuid }
+        reason: { type: string }
+      required: [ gameId, reason ]
+
+    GameEndedPlayerScoreResult:
+      type: object
+      properties:
+        playerId: { type: string, format: uuid }
+        faction: { $ref: '#/components/schemas/Faction' }
+        score: { type: integer }
+      required: [ playerId, faction, score ]
+
+    GameEndedPayload:
+      type: object
+      properties:
+        gameId: { type: string, format: uuid }
+        endReason: { type: string }
+        finalScores:
+          type: array
+          items: { $ref: '#/components/schemas/GameEndedPlayerScoreResult' }
+      required: [ gameId, endReason, finalScores ]
+
+    TimelineCollapsedPlayerFactionResult:
+      type: object
+      properties:
+        playerId: { type: string, format: uuid }
+        faction: { $ref: '#/components/schemas/Faction' }
+      required: [ playerId, faction ]
+
+    TimelineCollapsedPayload:
+      type: object
+      properties:
+        gameId: { type: string, format: uuid }
+        eraNumber: { type: integer }
+        winners:
+          type: array
+          items: { $ref: '#/components/schemas/TimelineCollapsedPlayerFactionResult' }
+        losers:
+          type: array
+          items: { $ref: '#/components/schemas/TimelineCollapsedPlayerFactionResult' }
+      required: [ gameId, eraNumber, winners, losers ]
+
+    TimelineStabilizedPlayerFactionResult:
+      type: object
+      properties:
+        playerId: { type: string, format: uuid }
+        faction: { $ref: '#/components/schemas/Faction' }
+        activeChainLength: { type: integer }
+      required: [ playerId, faction ]
+
+    TimelineStabilizedPayload:
+      type: object
+      properties:
+        gameId: { type: string, format: uuid }
+        winners:
+          type: array
+          items: { $ref: '#/components/schemas/TimelineStabilizedPlayerFactionResult' }
+        losers:
+          type: array
+          items: { $ref: '#/components/schemas/TimelineStabilizedPlayerFactionResult' }
+      required: [ gameId, winners, losers ]
+
+    WinConditionMetPayload:
+      type: object
+      properties:
+        gameId: { type: string, format: uuid }
+        winnerId: { type: string, format: uuid }
+        faction: { $ref: '#/components/schemas/Faction' }
+        finalScore: { type: integer }
+        winType: { type: string }
+      required: [ gameId, winnerId, faction, finalScore, winType ]
+
+    FactionRevealedPlayerFactionResult:
+      type: object
+      properties:
+        playerId: { type: string, format: uuid }
+        faction: { $ref: '#/components/schemas/Faction' }
+      required: [ playerId, faction ]
+
+    FactionRevealedPayload:
+      type: object
+      properties:
+        gameId: { type: string, format: uuid }
+        reveals:
+          type: array
+          items: { $ref: '#/components/schemas/FactionRevealedPlayerFactionResult' }
+      required: [ gameId, reveals ]
+
+    EventsDrawnOutcome:
+      type: object
+      properties:
+        outcomeId: { type: string, format: uuid }
+        description: { type: string }
+        initialProbability: { type: integer }
+      required: [ outcomeId, description, initialProbability ]
+
+    EventsDrawnFutureEvent:
+      type: object
+      properties:
+        eventId: { type: string, format: uuid }
+        title: { type: string }
+        outcomes:
+          type: array
+          items: { $ref: '#/components/schemas/EventsDrawnOutcome' }
+        isCascaded: { type: boolean }
+      required: [ eventId, title, outcomes, isCascaded ]
+
+    EventsDrawnPayload:
+      type: object
+      properties:
+        gameId: { type: string, format: uuid }
+        eraNumber: { type: integer }
+        events:
+          type: array
+          items: { $ref: '#/components/schemas/EventsDrawnFutureEvent' }
+      required: [ gameId, eraNumber, events ]
+
+    HandDealtCardInstance:
+      type: object
+      properties:
+        cardInstanceId: { type: string, format: uuid }
+        cardType: { $ref: '#/components/schemas/CardType' }
+      required: [ cardInstanceId, cardType ]
+
+    HandDealtPayload:
+      type: object
+      properties:
+        gameId: { type: string, format: uuid }
+        eraNumber: { type: integer }
+        playerId: { type: string, format: uuid }
+        cards:
+          type: array
+          items: { $ref: '#/components/schemas/HandDealtCardInstance' }
+      required: [ gameId, eraNumber, playerId, cards ]
+
+    ResolutionStartedPayload:
+      type: object
+      properties:
+        gameId: { type: string, format: uuid }
+        eraNumber: { type: integer }
+      required: [ gameId, eraNumber ]
+
+    Faction:
+      $ref: './shared/enums.yaml#/Faction'
+
+    CardType:
+      $ref: './shared/enums.yaml#/CardType'

@@ -9,10 +9,9 @@ import java.util.regex.Pattern;
 import com.fasterxml.jackson.databind.JsonNode;
 
 /**
- * Generates a single {@code GeneratedChannelContract.java} source from a parsed {@link AsyncApiDocument}: payload
- * records (fields derived from each message's JSON Schema payload), an {@code EVENT_TYPE} constant per message,
- * {@code Producer}/{@code Consumer} interfaces, and a {@code Consumer.dispatch} method routing a raw record to its
- * typed handler by {@code eventType}.
+ * Generates a single Java contract source for one AsyncAPI channel: payload records (fields derived from each
+ * message's JSON Schema payload), an {@code EVENT_TYPE} constant per message, {@code Producer}/{@code Consumer}
+ * interfaces, and a {@code Consumer.dispatch} method routing a raw record to its typed handler by {@code eventType}.
  */
 final class JavaContractGenerator {
 
@@ -20,16 +19,18 @@ final class JavaContractGenerator {
 
     private final AsyncApiDocument document;
     private final String javaPackage;
+    private final String className;
     private final Map<String, String> nestedTypeSources = new LinkedHashMap<>();
 
-    JavaContractGenerator(AsyncApiDocument document, String javaPackage) {
+    JavaContractGenerator(AsyncApiDocument document, String javaPackage, String className) {
         this.document = document;
         this.javaPackage = javaPackage;
+        this.className = className;
     }
 
-    String generate() {
-        List<AsyncApiDocument.Message> messages = document.messages();
-        String address = document.channelAddress();
+    String generate(AsyncApiDocument.Channel channel) {
+        List<AsyncApiDocument.Message> messages = channel.messages();
+        String address = channel.address();
 
         Map<String, String> javaNameByMessage = new LinkedHashMap<>();
         Map<String, String> seenJavaNames = new LinkedHashMap<>();
@@ -79,12 +80,12 @@ final class JavaContractGenerator {
                 import java.util.UUID;
 
                 /** Generated from the AsyncAPI 3 channel and message contract. */
-                public final class GeneratedChannelContract {
+                public final class %s {
 
                     public static final String CHANNEL = "%s";
                     public static final String OUTPUT_BINDING = "%s";
 
-                    private GeneratedChannelContract() {}
+                    private %s() {}
 
                     public record EventHeaders(
                             UUID eventId,
@@ -115,8 +116,10 @@ final class JavaContractGenerator {
                 """
                 .formatted(
                         javaPackage,
+                        className,
                         address,
                         bindingName(address),
+                        className,
                         payloads,
                         nestedTypesSource,
                         producerMethods,

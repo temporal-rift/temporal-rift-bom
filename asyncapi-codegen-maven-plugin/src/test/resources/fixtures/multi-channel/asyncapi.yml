@@ -1,19 +1,25 @@
 asyncapi: 3.0.0
 info:
-  title: Channel binding compatibility fixture
+  title: Multi-channel fixture
   version: 1.0.0
+
 servers:
   kafka:
     host: localhost:9092
     protocol: kafka
+
 channels:
   gameEvents:
     address: game.events
     messages:
       lobbyCreated:
         $ref: '#/components/messages/LobbyCreated'
-      gameStarted:
-        $ref: '#/components/messages/GameStarted'
+  timelineEvents:
+    address: timeline.events
+    messages:
+      resolutionStarted:
+        $ref: '#/components/messages/ResolutionStarted'
+
 operations:
   publishLobbyCreated:
     action: send
@@ -21,12 +27,13 @@ operations:
       $ref: '#/channels/gameEvents'
     messages:
       - $ref: '#/channels/gameEvents/messages/lobbyCreated'
-  publishGameStarted:
+  publishResolutionStarted:
     action: send
     channel:
-      $ref: '#/channels/gameEvents'
+      $ref: '#/channels/timelineEvents'
     messages:
-      - $ref: '#/channels/gameEvents/messages/gameStarted'
+      - $ref: '#/channels/timelineEvents/messages/resolutionStarted'
+
 components:
   messages:
     LobbyCreated:
@@ -34,12 +41,16 @@ components:
       payload:
         type: object
         properties:
-          gameId:
+          lobbyId:
             type: string
-    GameStarted:
-      name: GameStarted
+            format: uuid
+        required: [ lobbyId ]
+    ResolutionStarted:
+      name: ResolutionStarted
       payload:
         type: object
         properties:
           gameId:
             type: string
+            format: uuid
+        required: [ gameId ]

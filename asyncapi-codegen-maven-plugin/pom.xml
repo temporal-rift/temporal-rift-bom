@@ -4,13 +4,10 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <parent>
-        <groupId>io.github.temporal-rift</groupId>
-        <artifactId>temporal-rift-bom</artifactId>
-        <version>1.5.3</version>
-        <relativePath>../pom.xml</relativePath>
-    </parent>
-
+    <!-- No <parent>: temporal-rift-bom's own build now depends on this plugin (see its pom.xml
+         <build><plugins>), so inheriting temporal-rift-bom here would create a circular self-build —
+         the same reason build-tools is standalone. Must be built and published before the BOM. -->
+    <groupId>io.github.temporal-rift</groupId>
     <artifactId>asyncapi-codegen-maven-plugin</artifactId>
     <version>0.1.0</version>
     <packaging>maven-plugin</packaging>
@@ -19,11 +16,47 @@
     <description>Generates a channel-level Java contract (payload records, producer/consumer ports, event headers,
         eventType dispatch) from an AsyncAPI 3 document during generate-sources.
     </description>
+    <url>https://github.com/temporal-rift/temporal-rift-bom</url>
+
+    <licenses>
+        <license>
+            <name>GNU General Public License v3.0</name>
+            <url>https://www.gnu.org/licenses/gpl-3.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <id>kronen</id>
+            <name>Alberto Gonzalez Lagos</name>
+            <email>kronenr@gmail.com</email>
+            <url>https://github.com/kronen</url>
+            <roles>
+                <role>architect</role>
+                <role>developer</role>
+            </roles>
+            <timezone>Europe/Madrid</timezone>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:git@github.com:temporal-rift/temporal-rift-bom.git</connection>
+        <developerConnection>scm:git:git@github.com:temporal-rift/temporal-rift-bom.git</developerConnection>
+        <url>https://github.com/temporal-rift/temporal-rift-bom</url>
+        <tag>HEAD</tag>
+    </scm>
 
     <properties>
+        <maven.compiler.release>26</maven.compiler.release>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
         <maven-plugin-api.version>3.9.9</maven-plugin-api.version>
         <maven-plugin-tools.version>3.15.2</maven-plugin-tools.version>
         <jackson-dataformat-yaml.version>2.18.2</jackson-dataformat-yaml.version>
+        <junit-jupiter.version>6.0.3</junit-jupiter.version>
+        <assertj.version>3.27.7</assertj.version>
     </properties>
 
     <dependencies>
@@ -54,11 +87,13 @@
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
+            <version>${junit-jupiter.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
+            <version>${assertj.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -89,6 +124,7 @@
                     <plugin>
                         <groupId>org.sonatype.central</groupId>
                         <artifactId>central-publishing-maven-plugin</artifactId>
+                        <version>0.11.0</version>
                         <extensions>true</extensions>
                         <configuration>
                             <publishingServerId>central</publishingServerId>
@@ -98,6 +134,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-source-plugin</artifactId>
+                        <version>3.4.0</version>
                         <executions>
                             <execution>
                                 <id>attach-sources</id>
@@ -110,6 +147,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
+                        <version>3.12.0</version>
                         <configuration>
                             <doclint>none</doclint>
                         </configuration>
@@ -125,6 +163,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-gpg-plugin</artifactId>
+                        <version>3.2.8</version>
                         <executions>
                             <execution>
                                 <id>sign-artifacts</id>

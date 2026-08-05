@@ -23,7 +23,7 @@ import org.apache.maven.project.MavenProject;
 @Mojo(name = "generate", defaultPhase = LifecyclePhase.GENERATE_SOURCES, threadSafe = true)
 public class GenerateChannelContractMojo extends AbstractMojo {
 
-    private static final String BASE_PACKAGE = "io.github.temporalrift.generated.asyncapi";
+    private static final String BASE_PACKAGE = "io.github.temporalrift.asyncapi";
 
     @Parameter(defaultValue = "${project}", readonly = true, required = true)
     private MavenProject project;
@@ -80,14 +80,18 @@ public class GenerateChannelContractMojo extends AbstractMojo {
     private void generateFor(Path specFile) throws MojoExecutionException {
         try {
             AsyncApiDocument document = AsyncApiDocument.parse(specFile);
-            String specName = slugify(document.title());
-            String javaPackage = BASE_PACKAGE + "." + specName;
-            String source = new JavaContractGenerator(document, javaPackage).generate();
-
+            String javaPackage = BASE_PACKAGE + "." + slugify(document.title());
             Path packageDir = Path.of(outputDirectory, javaPackage.replace('.', '/'));
             Files.createDirectories(packageDir);
-            Files.writeString(packageDir.resolve("GeneratedChannelContract.java"), source);
-            getLog().info("Generated " + javaPackage + ".GeneratedChannelContract from " + specFile);
+
+            List<AsyncApiDocument.Channel> channels = document.channels();
+            boolean singleChannel = channels.size() == 1;
+            for (AsyncApiDocument.Channel channel : channels) {
+                String className = singleChannel ? "GeneratedChannelContract" : channelClassName(channel.key());
+                String source = new JavaContractGenerator(document, javaPackage, className).generate(channel);
+                Files.writeString(packageDir.resolve(className + ".java"), source);
+                getLog().info("Generated " + javaPackage + "." + className + " from " + specFile);
+            }
         } catch (IOException e) {
             throw new MojoExecutionException("Failed to generate contract for " + specFile, e);
         } catch (RuntimeException e) {
@@ -98,5 +102,11 @@ public class GenerateChannelContractMojo extends AbstractMojo {
     /** Derives a package-safe name from the spec's own {@code info.title}, e.g. "Action events" -> "actionevents". */
     private static String slugify(String title) {
         return title.replaceAll("[^A-Za-z0-9]", "").toLowerCase(java.util.Locale.ROOT);
+    }
+
+    /** e.g. "gameEvents" -> "GeneratedGameEventsContract", used only when a document declares multiple channels. */
+    private static String channelClassName(String channelKey) {
+        String name = JavaContractGenerator.javaName(channelKey);
+        return "Generated" + Character.toUpperCase(name.charAt(0)) + name.substring(1) + "Contract";
     }
 }
