@@ -1,0 +1,79 @@
+version: 2.1
+
+orbs:
+  snyk: snyk/snyk@2
+  git-shallow-clone: guitarrapc/git-shallow-clone@2.8.0
+
+jobs:
+  format-check:
+    docker:
+      - image: maven:3.9.16-eclipse-temurin-26
+    steps:
+      - git-shallow-clone/checkout
+      - restore_cache:
+          keys:
+            - deps-{{ checksum "asyncapi-codegen-maven-plugin/pom.xml" }}
+            - deps-
+      - run:
+          name: Format and Checkstyle
+          command: mvn -f pom.xml validate --batch-mode
+
+  security-snyk:
+    docker:
+      - image: maven:3.9.16-eclipse-temurin-26
+    steps:
+      - git-shallow-clone/checkout
+      - restore_cache:
+          keys:
+            - deps-{{ checksum "asyncapi-codegen-maven-plugin/pom.xml" }}
+            - deps-
+      - run:
+          name: Install sudo
+          command: apt-get update -qq && apt-get install -y sudo
+      - snyk/scan:
+          fail-on-issues: true
+          monitor-on-build: false
+          severity-threshold: high
+          additional-arguments: --file=asyncapi-codegen-maven-plugin/pom.xml --package-manager=maven --fail-on=upgradable --org=temporal-rift
+
+  build-test-analyze:
+    docker:
+      - image: maven:3.9.16-eclipse-temurin-26
+    steps:
+      - checkout:
+          method: full
+      - restore_cache:
+          keys:
+            - deps-{{ checksum "asyncapi-codegen-maven-plugin/pom.xml" }}
+            - deps-
+      - run:
+          name: Build, test and analyze
+          command: |
+            SONAR_ARGS=""
+            if [ -n "$CIRCLE_PULL_REQUEST" ]; then
+              PR_NUMBER="${CIRCLE_PULL_REQUEST##*/}"
+              SONAR_ARGS="-Dsonar.pullrequest.key=${PR_NUMBER} -Dsonar.pullrequest.branch=${CIRCLE_BRANCH} -Dsonar.pullrequest.base=main"
+            fi
+            mvn -f asyncapi-codegen-maven-plugin/pom.xml verify sonar:sonar --batch-mode ${SONAR_ARGS}
+      - run:
+          name: Collect test results
+          when: always
+          command: |
+            mkdir -p /tmp/test-results
+            find asyncapi-codegen-maven-plugin/target/surefire-reports -name 'TEST-*.xml' -exec cp {} /tmp/test-results/ \; 2>/dev/null || true
+      - store_test_results:
+          path: /tmp/test-results
+      - save_cache:
+          key: deps-{{ checksum "asyncapi-codegen-maven-plugin/pom.xml" }}
+          paths:
+            - ~/.m2/repository
+
+workflows:
+  pipeline:
+    jobs:
+      - format-check
+      - security-snyk
+      - build-test-analyze:
+          requires:
+            - format-check
+          context: SonarCloud

@@ -57,6 +57,16 @@
         <jackson-dataformat-yaml.version>2.18.2</jackson-dataformat-yaml.version>
         <junit-jupiter.version>6.0.3</junit-jupiter.version>
         <assertj.version>3.27.7</assertj.version>
+        <jacoco-maven-plugin.version>0.8.15</jacoco-maven-plugin.version>
+        <sonar-maven-plugin.version>5.7.0.6970</sonar-maven-plugin.version>
+
+        <!-- This module has no <parent>, so unlike the three services it inherits nothing from
+             temporal-rift-bom's pluginManagement — jacoco/sonar config below must be self-contained. -->
+        <sonar.organization>temporal-rift</sonar.organization>
+        <sonar.projectKey>temporal-rift_temporal-rift-bom</sonar.projectKey>
+        <sonar.host.url>https://sonarcloud.io</sonar.host.url>
+        <sonar.coverage.jacoco.xmlReportPaths>${project.build.directory}/site/jacoco/jacoco.xml
+        </sonar.coverage.jacoco.xmlReportPaths>
     </properties>
 
     <dependencies>
@@ -112,6 +122,41 @@
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>${jacoco-maven-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>prepare-agent</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>report</id>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                        <configuration>
+                            <formats>
+                                <format>XML</format>
+                            </formats>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- No <executions> — CI invokes this by its bare "sonar" CLI prefix (mvn verify sonar:sonar).
+                 A bare prefix only resolves against a groupId declared somewhere in the effective POM's
+                 plugins; since this module has no <parent> to inherit that declaration from, it must
+                 carry its own, exactly as temporal-rift-bom's root pom does for the services it parents. -->
+            <plugin>
+                <groupId>org.sonarsource.scanner.maven</groupId>
+                <artifactId>sonar-maven-plugin</artifactId>
+                <version>${sonar-maven-plugin.version}</version>
             </plugin>
         </plugins>
     </build>
