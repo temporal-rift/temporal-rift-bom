@@ -293,6 +293,51 @@ class JavaContractGeneratorTest {
                 .hasMessageContaining("more than once");
     }
 
+    @Test
+    void capitalizesLowercaseStartingMessageNamesInGeneratedTypeNames() throws IOException, URISyntaxException {
+        AsyncApiDocument document = AsyncApiDocument.parse(fixture("lowercase-message-name/asyncapi.yml"));
+        String source = new JavaContractGenerator(
+                        document, "io.github.temporalrift.asyncapi.lowercasemessagename", "GeneratedChannelContract")
+                .generate(onlyChannel(document));
+
+        // message name "thingHappened" must still produce a capitalized record/method name, not "thingHappenedPayload"
+        assertThat(source).contains("public record ThingHappenedPayload(");
+        assertThat(source).contains("publishThingHappened(");
+        assertThat(source).contains("onThingHappened(");
+
+        compileOrFail(source, "lowercasemessagename", "GeneratedChannelContract");
+    }
+
+    @Test
+    void rejectsANestedSchemaCollidingWithTheEnclosingClassName() throws IOException, URISyntaxException {
+        AsyncApiDocument document = AsyncApiDocument.parse(fixture("class-name-collision/asyncapi.yml"));
+        AsyncApiDocument.Channel channel = onlyChannel(document);
+
+        // an inline "generatedChannelContract" property normalizes to the same name as the enclosing class itself
+        assertThatThrownBy(() -> new JavaContractGenerator(
+                                document,
+                                "io.github.temporalrift.asyncapi.classnamecollision",
+                                "GeneratedChannelContract")
+                        .generate(channel))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("GeneratedChannelContract");
+    }
+
+    @Test
+    void rejectsPayloadSchemasWithNeitherPropertiesNorOneOf() throws IOException, URISyntaxException {
+        AsyncApiDocument document = AsyncApiDocument.parse(fixture("unsupported-schema-shape/asyncapi.yml"));
+        AsyncApiDocument.Channel channel = onlyChannel(document);
+
+        assertThatThrownBy(() -> new JavaContractGenerator(
+                                document,
+                                "io.github.temporalrift.asyncapi.unsupportedschemashape",
+                                "GeneratedChannelContract")
+                        .generate(channel))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("properties")
+                .hasMessageContaining("oneOf");
+    }
+
     private static AsyncApiDocument.Channel onlyChannel(AsyncApiDocument document) {
         List<AsyncApiDocument.Channel> channels = document.channels();
         assertThat(channels).hasSize(1);

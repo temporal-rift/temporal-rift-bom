@@ -1,0 +1,38 @@
+asyncapi: 3.0.0
+info:
+  title: Lowercase message name fixture
+  version: 1.0.0
+
+servers:
+  kafka:
+    host: localhost:9092
+    protocol: kafka
+
+channels:
+  gameEvents:
+    address: game.events
+    messages:
+      thingHappened:
+        $ref: '#/components/messages/thingHappened'
+
+operations:
+  publishThingHappened:
+    action: send
+    channel:
+      $ref: '#/channels/gameEvents'
+    messages:
+      - $ref: '#/channels/gameEvents/messages/thingHappened'
+
+components:
+  messages:
+    thingHappened:
+      name: thingHappened
+      payload:
+        $ref: '#/components/schemas/ThingHappenedPayload'
+
+  schemas:
+    ThingHappenedPayload:
+      type: object
+      properties:
+        gameId: { type: string, format: uuid }
+      required: [ gameId ]

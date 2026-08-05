@@ -115,9 +115,11 @@ final class JavaContractGenerator {
             javaNameByMessage.put(message.name(), name);
         }
 
-        // Reserve the fixed member type names and each message's own "<Name>Payload" record name before any
-        // recursive schema generation, so a nested/inline schema that happens to normalize to the same name (e.g.
-        // an inline "fooPayload" property inside message "Foo") is rejected instead of silently colliding.
+        // Reserve the enclosing class name, the fixed member type names, and each message's own "<Name>Payload"
+        // record name before any recursive schema generation, so a nested/inline schema that happens to normalize
+        // to one of these names (e.g. an inline "fooPayload" property inside message "Foo") is rejected instead of
+        // silently colliding — a nested type sharing the enclosing class's own name doesn't even compile.
+        claimName(className, FIXED_TYPE_MARKER);
         claimName("EventHeaders", FIXED_TYPE_MARKER);
         claimName("Producer", FIXED_TYPE_MARKER);
         claimName("Consumer", FIXED_TYPE_MARKER);
@@ -133,7 +135,10 @@ final class JavaContractGenerator {
         Map<String, String> seenEventTypeConstants = new LinkedHashMap<>();
 
         for (AsyncApiDocument.Message message : messages) {
-            String name = javaNameByMessage.get(message.name());
+            // capitalized, not the raw javaNameByMessage value, since this is embedded as a type-name prefix
+            // (record name, publish/on method suffixes) and a lowercase-starting message name would otherwise
+            // emit a lowercase-starting record name
+            String name = capitalize(message.name());
             String eventTypeConstant = eventTypeConstantName(name);
             String collidesWithEventType = seenEventTypeConstants.put(eventTypeConstant, message.name());
             if (collidesWithEventType != null) {
@@ -298,7 +303,8 @@ final class JavaContractGenerator {
         if (schema.has(ONE_OF)) {
             return mergeOneOfBranches(schema.path(ONE_OF), specFile);
         }
-        return Map.of();
+        throw new IllegalStateException("Schema in " + specFile
+                + " has neither \"properties\" nor \"oneOf\" - unsupported payload shape: " + schema);
     }
 
     private Map<String, PropertyInfo> mergeOneOfBranches(JsonNode oneOf, Path specFile) {
