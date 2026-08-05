@@ -5,7 +5,10 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -34,6 +37,8 @@ public class GenerateChannelContractMojo extends AbstractMojo {
     @Parameter(defaultValue = "${project.build.directory}/generated-sources/asyncapi-codegen", readonly = true)
     private String outputDirectory;
 
+    private final Map<String, String> titleBySlug = new LinkedHashMap<>();
+
     @Override
     public void execute() throws MojoExecutionException {
         Path specsRoot = Path.of(dependencySpecsDirectory);
@@ -48,11 +53,27 @@ public class GenerateChannelContractMojo extends AbstractMojo {
             return;
         }
 
+        clearPriorOutput();
         for (Path specFile : specFiles) {
             generateFor(specFile);
         }
 
         project.addCompileSourceRoot(outputDirectory);
+    }
+
+    /** Removes output from a prior incremental build so a spec removed since then doesn't leave a stale source file. */
+    private void clearPriorOutput() throws MojoExecutionException {
+        Path root = Path.of(outputDirectory);
+        if (!Files.isDirectory(root)) {
+            return;
+        }
+        try (var paths = Files.walk(root)) {
+            for (Path path : paths.sorted(Comparator.reverseOrder()).toList()) {
+                Files.delete(path);
+            }
+        } catch (IOException e) {
+            throw new MojoExecutionException("Failed to clear prior output at " + root, e);
+        }
     }
 
     private List<Path> findAsyncApiSpecs(Path specsRoot) throws MojoExecutionException {
@@ -80,7 +101,8 @@ public class GenerateChannelContractMojo extends AbstractMojo {
     private void generateFor(Path specFile) throws MojoExecutionException {
         try {
             AsyncApiDocument document = AsyncApiDocument.parse(specFile);
-            String javaPackage = BASE_PACKAGE + "." + slugify(document.title());
+            String title = document.title();
+            String javaPackage = BASE_PACKAGE + "." + slugify(title, specFile);
             Path packageDir = Path.of(outputDirectory, javaPackage.replace('.', '/'));
             Files.createDirectories(packageDir);
 
@@ -100,8 +122,19 @@ public class GenerateChannelContractMojo extends AbstractMojo {
     }
 
     /** Derives a package-safe name from the spec's own {@code info.title}, e.g. "Action events" -> "actionevents". */
-    private static String slugify(String title) {
-        return title.replaceAll("[^A-Za-z0-9]", "").toLowerCase(java.util.Locale.ROOT);
+    private String slugify(String title, Path specFile) throws MojoExecutionException {
+        String slug = title.replaceAll("[^A-Za-z0-9]", "").toLowerCase(java.util.Locale.ROOT);
+        if (slug.isEmpty()) {
+            throw new MojoExecutionException(
+                    "Spec " + specFile + " has info.title \"" + title + "\", which has no alphanumeric characters"
+                            + " to derive a package name from");
+        }
+        String previousTitle = titleBySlug.putIfAbsent(slug, title);
+        if (previousTitle != null && !previousTitle.equals(title)) {
+            throw new MojoExecutionException("info.title \"" + previousTitle + "\" and \"" + title
+                    + "\" both derive the same package suffix \"" + slug + "\" (spec: " + specFile + ")");
+        }
+        return slug;
     }
 
     /** e.g. "gameEvents" -> "GeneratedGameEventsContract", used only when a document declares multiple channels. */

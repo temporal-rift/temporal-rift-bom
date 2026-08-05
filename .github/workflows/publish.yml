@@ -62,7 +62,11 @@ jobs:
           CODEGEN_PLUGIN_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -L \
             "https://repo1.maven.org/maven2/io/github/temporal-rift/asyncapi-codegen-maven-plugin/$CODEGEN_PLUGIN_VERSION/asyncapi-codegen-maven-plugin-$CODEGEN_PLUGIN_VERSION.pom")
           echo "asyncapi-codegen-maven-plugin HTTP Status: $CODEGEN_PLUGIN_STATUS"
-          echo "CODEGEN_PLUGIN_CHANGED=$( [ "$CODEGEN_PLUGIN_STATUS" = "200" ] && echo false || echo true )" >> $GITHUB_ENV
+          case "$CODEGEN_PLUGIN_STATUS" in
+            200) echo "CODEGEN_PLUGIN_CHANGED=false" >> "$GITHUB_ENV" ;;
+            404) echo "CODEGEN_PLUGIN_CHANGED=true" >> "$GITHUB_ENV" ;;
+            *) echo "Could not verify asyncapi-codegen-maven-plugin publication status (HTTP $CODEGEN_PLUGIN_STATUS)" >&2; exit 1 ;;
+          esac
 
       - name: Publish build-tools to Maven Central
         if: env.BUILD_TOOLS_CHANGED == 'true'

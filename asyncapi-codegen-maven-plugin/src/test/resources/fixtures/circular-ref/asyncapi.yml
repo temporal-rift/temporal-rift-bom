@@ -1,0 +1,37 @@
+asyncapi: 3.0.0
+info:
+  title: Circular ref fixture
+  version: 1.0.0
+
+servers:
+  kafka:
+    host: localhost:9092
+    protocol: kafka
+
+channels:
+  gameEvents:
+    address: game.events
+    messages:
+      thingHappened:
+        $ref: '#/components/messages/ThingHappened'
+
+operations:
+  publishThingHappened:
+    action: send
+    channel:
+      $ref: '#/channels/gameEvents'
+    messages:
+      - $ref: '#/channels/gameEvents/messages/thingHappened'
+
+components:
+  messages:
+    ThingHappened:
+      name: ThingHappened
+      payload:
+        $ref: '#/components/schemas/SchemaA'
+
+  schemas:
+    SchemaA:
+      $ref: '#/components/schemas/SchemaB'
+    SchemaB:
+      $ref: '#/components/schemas/SchemaA'

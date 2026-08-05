@@ -1,6 +1,7 @@
 package io.github.temporalrift.asyncapi.codegen;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -108,6 +109,63 @@ class JavaContractGeneratorTest {
 
         compileOrFail(gameSource, "multichannel", "GeneratedGameEventsContract");
         compileOrFail(timelineSource, "multichannel", "GeneratedTimelineEventsContract");
+    }
+
+    @Test
+    void suffixesReservedWordFieldNamesAndCompiles() throws IOException, URISyntaxException {
+        AsyncApiDocument document = AsyncApiDocument.parse(fixture("edge-cases/asyncapi.yml"));
+        String source = new JavaContractGenerator(document, "io.github.temporalrift.asyncapi.edgecases", "GeneratedChannelContract")
+                .generate(onlyChannel(document));
+
+        assertThat(source).contains("String classValue");
+        assertThat(source).contains("int defaultValue");
+
+        compileOrFail(source, "edgecases", "GeneratedChannelContract");
+    }
+
+    @Test
+    void rejectsTwoDifferentSchemasGeneratingTheSameNestedTypeName() throws IOException, URISyntaxException {
+        AsyncApiDocument document = AsyncApiDocument.parse(fixture("name-collision/asyncapi.yml"));
+        AsyncApiDocument.Channel channel = onlyChannel(document);
+
+        assertThatThrownBy(() -> new JavaContractGenerator(
+                        document, "io.github.temporalrift.asyncapi.namecollision", "GeneratedChannelContract")
+                        .generate(channel))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Metadata");
+    }
+
+    @Test
+    void rejectsCircularRefChains() throws IOException, URISyntaxException {
+        AsyncApiDocument document = AsyncApiDocument.parse(fixture("circular-ref/asyncapi.yml"));
+
+        assertThatThrownBy(document::channels)
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("circular");
+    }
+
+    @Test
+    void rejectsEnumValuesThatArentValidJavaIdentifiers() throws IOException, URISyntaxException {
+        AsyncApiDocument document = AsyncApiDocument.parse(fixture("invalid-enum/asyncapi.yml"));
+        AsyncApiDocument.Channel channel = onlyChannel(document);
+
+        assertThatThrownBy(() -> new JavaContractGenerator(
+                        document, "io.github.temporalrift.asyncapi.invalidenum", "GeneratedChannelContract")
+                        .generate(channel))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("in-progress");
+    }
+
+    @Test
+    void rejectsBlankChannelAddress() throws IOException, URISyntaxException {
+        AsyncApiDocument.Channel blankAddressChannel = new AsyncApiDocument.Channel("gameEvents", "", List.of());
+        AsyncApiDocument document = AsyncApiDocument.parse(fixture("edge-cases/asyncapi.yml"));
+
+        assertThatThrownBy(() -> new JavaContractGenerator(
+                        document, "io.github.temporalrift.asyncapi.blank", "GeneratedChannelContract")
+                        .generate(blankAddressChannel))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("no address");
     }
 
     private static AsyncApiDocument.Channel onlyChannel(AsyncApiDocument document) {

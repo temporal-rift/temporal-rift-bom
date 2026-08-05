@@ -15,6 +15,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 final class AsyncApiDocument {
 
     private static final YAMLMapper YAML_MAPPER = new YAMLMapper();
+    private static final int MAX_REF_DEPTH = 10;
 
     private final JsonNode root;
     private final Path specFile;
@@ -73,15 +74,24 @@ final class AsyncApiDocument {
         JsonNode current = node;
         Path currentFileRef = currentFile;
         int guard = 0;
-        while (current.has("$ref") && guard++ < 10) {
+        while (current.has("$ref")) {
+            if (guard++ >= MAX_REF_DEPTH) {
+                throw new IllegalStateException("Unresolvable or circular $ref chain starting in " + currentFile
+                        + ", exceeded " + MAX_REF_DEPTH + " hops at " + current.path("$ref").asText());
+            }
             String ref = current.path("$ref").asText();
             int hashIndex = ref.indexOf('#');
             String filePart = hashIndex < 0 ? ref : ref.substring(0, hashIndex);
             String fragment = hashIndex < 0 ? "" : ref.substring(hashIndex + 1);
 
-            Path targetFile = filePart.isEmpty() ? currentFileRef : currentFileRef.getParent().resolve(filePart).normalize();
+            Path targetFile = filePart.isEmpty()
+                    ? currentFileRef
+                    : currentFileRef.toAbsolutePath().getParent().resolve(filePart).normalize();
             JsonNode targetRoot = fileCache.computeIfAbsent(targetFile, this::loadFile);
             current = navigateFragment(targetRoot, fragment);
+            if (current.isMissingNode()) {
+                throw new IllegalStateException("$ref \"" + ref + "\" in " + currentFileRef + " resolves to nothing");
+            }
             currentFileRef = targetFile;
         }
         return current;

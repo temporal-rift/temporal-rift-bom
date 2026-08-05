@@ -4,7 +4,10 @@ import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Pattern;
+
+import javax.lang.model.SourceVersion;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
@@ -17,10 +20,19 @@ final class JavaContractGenerator {
 
     private static final Pattern NAME_SEPARATOR = Pattern.compile("[^A-Za-z0-9]+");
 
+    private static final Set<String> RESERVED_WORDS = Set.of(
+            "abstract", "assert", "boolean", "break", "byte", "case", "catch", "char", "class", "const",
+            "continue", "default", "do", "double", "else", "enum", "extends", "final", "finally", "float",
+            "for", "goto", "if", "implements", "import", "instanceof", "int", "interface", "long", "native",
+            "new", "package", "private", "protected", "public", "return", "short", "static", "strictfp",
+            "super", "switch", "synchronized", "this", "throw", "throws", "transient", "try", "void",
+            "volatile", "while", "true", "false", "null", "_");
+
     private final AsyncApiDocument document;
     private final String javaPackage;
     private final String className;
     private final Map<String, String> nestedTypeSources = new LinkedHashMap<>();
+    private final Map<String, JsonNode> nestedTypeSchemas = new LinkedHashMap<>();
 
     JavaContractGenerator(AsyncApiDocument document, String javaPackage, String className) {
         this.document = document;
@@ -31,6 +43,10 @@ final class JavaContractGenerator {
     String generate(AsyncApiDocument.Channel channel) {
         List<AsyncApiDocument.Message> messages = channel.messages();
         String address = channel.address();
+        if (address == null || address.isBlank()) {
+            throw new IllegalStateException(
+                    "Channel \"" + channel.key() + "\" in " + document.specFile() + " declares no address");
+        }
 
         Map<String, String> javaNameByMessage = new LinkedHashMap<>();
         Map<String, String> seenJavaNames = new LinkedHashMap<>();
@@ -57,7 +73,7 @@ final class JavaContractGenerator {
                     .append(recordFields(message.payloadSchema(), document.specFile()))
                     .append(") {}\n");
             payloads.append("    public static final String ").append(eventTypeConstant).append(" = \"")
-                    .append(message.name()).append("\";\n\n");
+                    .append(stringLiteral(message.name())).append("\";\n\n");
 
             producerMethods.append("        boolean publish").append(name).append('(').append(name)
                     .append("Payload payload, EventHeaders headers);\n");
@@ -88,6 +104,7 @@ final class JavaContractGenerator {
                     private %s() {}
 
                     public record EventHeaders(
+                            String eventType,
                             UUID eventId,
                             UUID aggregateId,
                             String aggregateType,
@@ -117,7 +134,7 @@ final class JavaContractGenerator {
                 .formatted(
                         javaPackage,
                         className,
-                        address,
+                        stringLiteral(address),
                         bindingName(address),
                         className,
                         payloads,
@@ -125,6 +142,13 @@ final class JavaContractGenerator {
                         producerMethods,
                         consumerMethods,
                         dispatchCases);
+    }
+
+    private static String stringLiteral(String value) {
+        return value.replace("\\", "\\\\")
+                .replace("\"", "\\\"")
+                .replace("\n", "\\n")
+                .replace("\r", "\\r");
     }
 
     private String recordFields(JsonNode objectSchema, Path specFile) {
@@ -189,15 +213,21 @@ final class JavaContractGenerator {
     }
 
     private String registerEnum(String name, JsonNode schema) {
+        claimName(name, schema);
         if (!nestedTypeSources.containsKey(name)) {
             StringBuilder constants = new StringBuilder();
             boolean first = true;
             for (JsonNode value : schema.path("enum")) {
+                String constant = value.asText();
+                if (!SourceVersion.isName(constant)) {
+                    throw new IllegalStateException(
+                            "Enum value \"" + constant + "\" in schema \"" + name + "\" is not a valid Java identifier");
+                }
                 if (!first) {
                     constants.append(", ");
                 }
                 first = false;
-                constants.append(value.asText());
+                constants.append(constant);
             }
             nestedTypeSources.put(name, "    public enum " + name + " { " + constants + " }");
         }
@@ -205,12 +235,21 @@ final class JavaContractGenerator {
     }
 
     private String registerRecord(String name, JsonNode schema, Path specFile) {
+        claimName(name, schema);
         if (!nestedTypeSources.containsKey(name)) {
             nestedTypeSources.put(name, "PLACEHOLDER");
             String fields = recordFields(schema, specFile);
             nestedTypeSources.put(name, "    public record " + name + "(" + fields + ") {}");
         }
         return name;
+    }
+
+    /** Fails fast if two different schemas would both generate the same nested type name. */
+    private void claimName(String name, JsonNode schema) {
+        JsonNode previous = nestedTypeSchemas.putIfAbsent(name, schema);
+        if (previous != null && !previous.equals(schema)) {
+            throw new IllegalStateException("Two different schemas both generate the nested type \"" + name + "\"");
+        }
     }
 
     static String javaName(String value) {
@@ -229,12 +268,18 @@ final class JavaContractGenerator {
             }
         }
         String result = camel.toString();
-        return Character.isDigit(result.charAt(0)) ? "Msg" + result : result;
+        if (result.isEmpty()) {
+            throw new IllegalStateException("Cannot derive a Java identifier from \"" + value + "\"");
+        }
+        if (Character.isDigit(result.charAt(0))) {
+            result = "Msg" + result;
+        }
+        return RESERVED_WORDS.contains(result) ? result + "Value" : result;
     }
 
     private static String capitalize(String value) {
         String name = javaName(value);
-        return name.isEmpty() ? name : Character.toUpperCase(name.charAt(0)) + name.substring(1);
+        return Character.toUpperCase(name.charAt(0)) + name.substring(1);
     }
 
     private static String eventTypeConstantName(String javaName) {
