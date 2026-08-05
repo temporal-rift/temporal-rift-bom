@@ -1,0 +1,36 @@
+asyncapi: 3.0.0
+info:
+  title: Unsupported schema shape fixture
+  version: 1.0.0
+
+servers:
+  kafka:
+    host: localhost:9092
+    protocol: kafka
+
+channels:
+  gameEvents:
+    address: game.events
+    messages:
+      thingHappened:
+        $ref: '#/components/messages/ThingHappened'
+
+operations:
+  publishThingHappened:
+    action: send
+    channel:
+      $ref: '#/channels/gameEvents'
+    messages:
+      - $ref: '#/channels/gameEvents/messages/thingHappened'
+
+components:
+  messages:
+    ThingHappened:
+      name: ThingHappened
+      payload:
+        $ref: '#/components/schemas/ThingHappenedPayload'
+
+  schemas:
+    ThingHappenedPayload:
+      type: object
+      description: has neither properties nor oneOf - not a supported payload shape

@@ -1,0 +1,3 @@
+Status:
+  type: string
+  enum: [ ACTIVE, INACTIVE ]

@@ -1,0 +1,67 @@
+asyncapi: 3.0.0
+info:
+  title: Name collision fixture
+  version: 1.0.0
+
+servers:
+  kafka:
+    host: localhost:9092
+    protocol: kafka
+
+channels:
+  gameEvents:
+    address: game.events
+    messages:
+      firstThing:
+        $ref: '#/components/messages/FirstThing'
+      secondThing:
+        $ref: '#/components/messages/SecondThing'
+
+operations:
+  publishFirstThing:
+    action: send
+    channel:
+      $ref: '#/channels/gameEvents'
+    messages:
+      - $ref: '#/channels/gameEvents/messages/firstThing'
+  publishSecondThing:
+    action: send
+    channel:
+      $ref: '#/channels/gameEvents'
+    messages:
+      - $ref: '#/channels/gameEvents/messages/secondThing'
+
+components:
+  messages:
+    FirstThing:
+      name: FirstThing
+      payload:
+        $ref: '#/components/schemas/FirstThingPayload'
+    SecondThing:
+      name: SecondThing
+      payload:
+        $ref: '#/components/schemas/SecondThingPayload'
+
+  schemas:
+    FirstThingPayload:
+      type: object
+      properties:
+        metadata:
+          $ref: '#/components/schemas/Metadata'
+      required: [ metadata ]
+    SecondThingPayload:
+      type: object
+      properties:
+        metadata:
+          type: object
+          properties:
+            unrelatedField:
+              type: string
+          required: [ unrelatedField ]
+      required: [ metadata ]
+    Metadata:
+      type: object
+      properties:
+        source:
+          type: string
+      required: [ source ]

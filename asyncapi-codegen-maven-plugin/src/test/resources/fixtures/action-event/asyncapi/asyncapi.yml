@@ -1,0 +1,324 @@
+asyncapi: 3.0.0
+info:
+  title: Action events
+  version: 1.0.3
+  description: Action module domain events published to game.events
+
+servers:
+  kafka:
+    host: localhost:9092
+    protocol: kafka
+
+channels:
+  gameEvents:
+    address: game.events
+    messages:
+      actionRoundStarted:
+        $ref: '#/components/messages/ActionRoundStarted'
+      cardPlayed:
+        $ref: '#/components/messages/CardPlayed'
+      specialActionPlayed:
+        $ref: '#/components/messages/SpecialActionPlayed'
+      actionRoundTimerExpired:
+        $ref: '#/components/messages/ActionRoundTimerExpired'
+      playerSkipped:
+        $ref: '#/components/messages/PlayerSkipped'
+      actionRoundClosed:
+        $ref: '#/components/messages/ActionRoundClosed'
+      roundSummaryPublished:
+        $ref: '#/components/messages/RoundSummaryPublished'
+      bandedProbabilityPublished:
+        $ref: '#/components/messages/BandedProbabilityPublished'
+      activistDeclarationRecorded:
+        $ref: '#/components/messages/ActivistDeclarationRecorded'
+      exposeSignatureRevealed:
+        $ref: '#/components/messages/ExposeSignatureRevealed'
+      exposeBehaviorChanged:
+        $ref: '#/components/messages/ExposeBehaviorChanged'
+
+operations:
+  publishActionRoundStarted:
+    action: send
+    channel: { $ref: '#/channels/gameEvents' }
+    messages: [ { $ref: '#/channels/gameEvents/messages/actionRoundStarted' } ]
+  publishCardPlayed:
+    action: send
+    channel: { $ref: '#/channels/gameEvents' }
+    messages: [ { $ref: '#/channels/gameEvents/messages/cardPlayed' } ]
+  publishSpecialActionPlayed:
+    action: send
+    channel: { $ref: '#/channels/gameEvents' }
+    messages: [ { $ref: '#/channels/gameEvents/messages/specialActionPlayed' } ]
+  publishActionRoundTimerExpired:
+    action: send
+    channel: { $ref: '#/channels/gameEvents' }
+    messages: [ { $ref: '#/channels/gameEvents/messages/actionRoundTimerExpired' } ]
+  publishPlayerSkipped:
+    action: send
+    channel: { $ref: '#/channels/gameEvents' }
+    messages: [ { $ref: '#/channels/gameEvents/messages/playerSkipped' } ]
+  publishActionRoundClosed:
+    action: send
+    channel: { $ref: '#/channels/gameEvents' }
+    messages: [ { $ref: '#/channels/gameEvents/messages/actionRoundClosed' } ]
+  publishRoundSummaryPublished:
+    action: send
+    channel: { $ref: '#/channels/gameEvents' }
+    messages: [ { $ref: '#/channels/gameEvents/messages/roundSummaryPublished' } ]
+  publishBandedProbabilityPublished:
+    action: send
+    channel: { $ref: '#/channels/gameEvents' }
+    messages: [ { $ref: '#/channels/gameEvents/messages/bandedProbabilityPublished' } ]
+  publishActivistDeclarationRecorded:
+    action: send
+    channel: { $ref: '#/channels/gameEvents' }
+    messages: [ { $ref: '#/channels/gameEvents/messages/activistDeclarationRecorded' } ]
+  publishExposeSignatureRevealed:
+    action: send
+    channel: { $ref: '#/channels/gameEvents' }
+    messages: [ { $ref: '#/channels/gameEvents/messages/exposeSignatureRevealed' } ]
+  publishExposeBehaviorChanged:
+    action: send
+    channel: { $ref: '#/channels/gameEvents' }
+    messages: [ { $ref: '#/channels/gameEvents/messages/exposeBehaviorChanged' } ]
+
+components:
+  messages:
+    ActionRoundStarted:
+      name: ActionRoundStarted
+      title: Action round started
+      headers: { $ref: '#/components/schemas/EventEnvelopeHeaders' }
+      payload: { $ref: '#/components/schemas/ActionRoundStartedPayload' }
+    CardPlayed:
+      name: CardPlayed
+      title: Card played
+      headers: { $ref: '#/components/schemas/EventEnvelopeHeaders' }
+      payload: { $ref: '#/components/schemas/CardPlayedPayload' }
+    SpecialActionPlayed:
+      name: SpecialActionPlayed
+      title: Special action played
+      headers: { $ref: '#/components/schemas/EventEnvelopeHeaders' }
+      payload: { $ref: '#/components/schemas/SpecialActionPlayedPayload' }
+    ActionRoundTimerExpired:
+      name: ActionRoundTimerExpired
+      title: Action round timer expired
+      headers: { $ref: '#/components/schemas/EventEnvelopeHeaders' }
+      payload: { $ref: '#/components/schemas/ActionRoundTimerExpiredPayload' }
+    PlayerSkipped:
+      name: PlayerSkipped
+      title: Player skipped
+      headers: { $ref: '#/components/schemas/EventEnvelopeHeaders' }
+      payload: { $ref: '#/components/schemas/PlayerSkippedPayload' }
+    ActionRoundClosed:
+      name: ActionRoundClosed
+      title: Action round closed
+      headers: { $ref: '#/components/schemas/EventEnvelopeHeaders' }
+      payload: { $ref: '#/components/schemas/ActionRoundClosedPayload' }
+    RoundSummaryPublished:
+      name: RoundSummaryPublished
+      title: Round summary published
+      headers: { $ref: '#/components/schemas/EventEnvelopeHeaders' }
+      payload: { $ref: '#/components/schemas/RoundSummaryPublishedPayload' }
+    BandedProbabilityPublished:
+      name: BandedProbabilityPublished
+      title: Banded probability published
+      headers: { $ref: '#/components/schemas/EventEnvelopeHeaders' }
+      payload: { $ref: '#/components/schemas/BandedProbabilityPublishedPayload' }
+    ActivistDeclarationRecorded:
+      name: ActivistDeclarationRecorded
+      title: Activist declaration recorded
+      headers: { $ref: '#/components/schemas/EventEnvelopeHeaders' }
+      payload: { $ref: '#/components/schemas/ActivistDeclarationRecordedPayload' }
+    ExposeSignatureRevealed:
+      name: ExposeSignatureRevealed
+      title: Expose signature revealed
+      headers: { $ref: '#/components/schemas/EventEnvelopeHeaders' }
+      payload: { $ref: '#/components/schemas/ExposeSignatureRevealedPayload' }
+    ExposeBehaviorChanged:
+      name: ExposeBehaviorChanged
+      title: Expose behaviour changed
+      headers: { $ref: '#/components/schemas/EventEnvelopeHeaders' }
+      payload: { $ref: '#/components/schemas/ExposeBehaviorChangedPayload' }
+
+  schemas:
+    EventEnvelopeHeaders:
+      $ref: './shared/envelope-headers.yaml#/EventEnvelopeHeaders'
+
+    ActionRoundStartedPayload:
+      type: object
+      properties:
+        gameId: { type: string, format: uuid }
+        eraNumber: { type: integer }
+        roundNumber: { type: integer }
+        timerSeconds: { type: integer }
+        pendingPlayerIds:
+          type: array
+          items: { type: string, format: uuid }
+      required: [ gameId, eraNumber, roundNumber, timerSeconds, pendingPlayerIds ]
+
+    CardPlayedPayload:
+      type: object
+      properties:
+        gameId: { type: string, format: uuid }
+        eraNumber: { type: integer }
+        roundNumber: { type: integer }
+        playerId: { type: string, format: uuid }
+        cardInstanceId: { type: string, format: uuid }
+        cardType: { $ref: '#/components/schemas/CardType' }
+        targetEventId: { type: string, format: uuid }
+        sourceOutcomeId: { type: string, format: uuid }
+        targetOutcomeId: { type: string, format: uuid }
+      required: [ gameId, eraNumber, roundNumber, playerId, cardInstanceId, cardType, targetEventId ]
+
+    SpecialActionPlayedPayload:
+      type: object
+      properties:
+        gameId: { type: string, format: uuid }
+        eraNumber: { type: integer }
+        roundNumber: { type: integer }
+        playerId: { type: string, format: uuid }
+        faction: { $ref: '#/components/schemas/Faction' }
+        specialAction: { $ref: '#/components/schemas/SpecialAction' }
+        targetEventId: { type: string, format: uuid }
+        targetOutcomeId: { type: string, format: uuid }
+        targetPlayerId: { type: string, format: uuid }
+      required: [ gameId, eraNumber, roundNumber, playerId, faction, specialAction, targetEventId, targetOutcomeId ]
+
+    ActionRoundTimerExpiredPayload:
+      type: object
+      properties:
+        gameId: { type: string, format: uuid }
+        eraNumber: { type: integer }
+        roundNumber: { type: integer }
+        missingPlayerIds:
+          type: array
+          items: { type: string, format: uuid }
+      required: [ gameId, eraNumber, roundNumber, missingPlayerIds ]
+
+    PlayerSkippedPayload:
+      type: object
+      properties:
+        gameId: { type: string, format: uuid }
+        eraNumber: { type: integer }
+        roundNumber: { type: integer }
+        playerId: { type: string, format: uuid }
+        reason: { type: string }
+      required: [ gameId, eraNumber, roundNumber, playerId, reason ]
+
+    ActionRoundClosedPayload:
+      type: object
+      properties:
+        gameId: { type: string, format: uuid }
+        eraNumber: { type: integer }
+        roundNumber: { type: integer }
+        closedReason: { type: string }
+        totalActions: { type: integer }
+      required: [ gameId, eraNumber, roundNumber, closedReason, totalActions ]
+
+    ActionSummary:
+      type: object
+      properties:
+        playerId: { type: string, format: uuid }
+        actionCategory: { type: string }
+        actionFamily: { type: string }
+        skipped: { type: boolean }
+      required: [ playerId, actionCategory, actionFamily, skipped ]
+
+    RoundSummaryPublishedPayload:
+      type: object
+      properties:
+        gameId: { type: string, format: uuid }
+        eraNumber: { type: integer }
+        roundNumber: { type: integer }
+        actionSummaries:
+          type: array
+          items: { $ref: '#/components/schemas/ActionSummary' }
+      required: [ gameId, eraNumber, roundNumber, actionSummaries ]
+
+    BandedProbabilityOutcomeBandState:
+      type: object
+      properties:
+        outcomeId: { type: string, format: uuid }
+        band: { $ref: '#/components/schemas/ProbabilityBand' }
+      required: [ outcomeId, band ]
+
+    BandedProbabilityEventBandState:
+      type: object
+      properties:
+        eventId: { type: string, format: uuid }
+        outcomes:
+          type: array
+          items: { $ref: '#/components/schemas/BandedProbabilityOutcomeBandState' }
+      required: [ eventId, outcomes ]
+
+    BandedProbabilityPublishedPayload:
+      type: object
+      properties:
+        gameId: { type: string, format: uuid }
+        eraNumber: { type: integer }
+        eventStates:
+          type: array
+          items: { $ref: '#/components/schemas/BandedProbabilityEventBandState' }
+      required: [ gameId, eraNumber, eventStates ]
+
+    ActivistDeclarationMode:
+      type: string
+      enum: [ RALLY, MOMENTUM ]
+
+    InfluenceSignatureType:
+      type: string
+      enum: [ PUSH, SUPPRESS, SWING ]
+
+    ActivistDeclarationRecordedPayload:
+      type: object
+      properties:
+        gameId: { type: string, format: uuid }
+        eraNumber: { type: integer }
+        roundNumber: { type: integer, enum: [ 1 ] }
+        playerId: { type: string, format: uuid }
+        mode: { $ref: '#/components/schemas/ActivistDeclarationMode' }
+        targetEventId: { type: string, format: uuid }
+        targetOutcomeId: { type: string, format: uuid }
+      required: [ gameId, eraNumber, roundNumber, playerId, mode, targetEventId, targetOutcomeId ]
+
+    ExposeInfluenceSignature:
+      type: object
+      properties:
+        type: { $ref: '#/components/schemas/InfluenceSignatureType' }
+        targetEventId: { type: string, format: uuid }
+        sourceOutcomeId: { type: string, format: uuid }
+        targetOutcomeId: { type: string, format: uuid }
+      required: [ type, targetEventId, targetOutcomeId ]
+
+    ExposeSignatureRevealedPayload:
+      type: object
+      properties:
+        gameId: { type: string, format: uuid }
+        eraNumber: { type: integer }
+        roundNumber: { type: integer, enum: [ 2 ] }
+        activistPlayerId: { type: string, format: uuid }
+        targetPlayerId: { type: string, format: uuid }
+        signature: { $ref: '#/components/schemas/ExposeInfluenceSignature' }
+      required: [ gameId, eraNumber, roundNumber, activistPlayerId, targetPlayerId, signature ]
+
+    ExposeBehaviorChangedPayload:
+      type: object
+      properties:
+        gameId: { type: string, format: uuid }
+        eraNumber: { type: integer }
+        roundNumber: { type: integer, enum: [ 3 ] }
+        activistPlayerId: { type: string, format: uuid }
+        targetPlayerId: { type: string, format: uuid }
+      required: [ gameId, eraNumber, roundNumber, activistPlayerId, targetPlayerId ]
+
+    CardType:
+      $ref: './shared/enums.yaml#/CardType'
+
+    Faction:
+      $ref: './shared/enums.yaml#/Faction'
+
+    SpecialAction:
+      $ref: './shared/enums.yaml#/SpecialAction'
+
+    ProbabilityBand:
+      $ref: './shared/enums.yaml#/ProbabilityBand'
