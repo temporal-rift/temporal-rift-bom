@@ -46,7 +46,6 @@ publication to bridge a consumer to an unreleased BOM version.
 | Enforcement      | Maven Enforcer (Java 25, Maven 3.9.13+)    |
 | Coverage         | JaCoCo (managed, opt-in per service)       |
 | API generation   | OpenAPI Generator 7.20.0 (managed, opt-in) |
-| Event codegen    | ZenWave SDK 2.5.4 (managed, opt-in)        |
 | Contract resources | Generic unpacking of spec-only OpenAPI and AsyncAPI modules from `apis` |
 
 ## Generating code from an `apis` contract
@@ -65,30 +64,6 @@ and role are specific to that service.
 </dependency>
 ```
 
-```xml
-<plugin>
-    <groupId>io.zenwave360.sdk</groupId>
-    <artifactId>zenwave-sdk-maven-plugin</artifactId>
-    <executions>
-        <execution>
-            <id>generate-session-events</id>
-            <phase>generate-sources</phase>
-            <goals>
-                <goal>generate</goal>
-            </goals>
-            <configuration>
-                <inputSpec>${project.build.directory}/dependency-specs/session-event-1.0.0-jar/asyncapi/asyncapi.yml
-                </inputSpec>
-                <configOptions>
-                    <role>provider</role>
-                    <modelPackage>your.own.package.events.model</modelPackage>
-                    <producerApiPackage>your.own.package.events.producer</producerApiPackage>
-                </configOptions>
-            </configuration>
-        </execution>
-    </executions>
-</plugin>
-```
 
 `role=client` generates a consumer instead — use `consumerApiPackage` in that case. For a REST contract, use the
 matching path such as `${project.build.directory}/dependency-specs/session-api-1.0.0-jar/openapi/session.yml` as the

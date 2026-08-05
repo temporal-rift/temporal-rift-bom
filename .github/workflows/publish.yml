@@ -56,9 +56,21 @@ jobs:
           echo "build-tools HTTP Status: $BT_STATUS"
           echo "BUILD_TOOLS_CHANGED=$( [ "$BT_STATUS" = "200" ] && echo false || echo true )" >> $GITHUB_ENV
 
+          CODEGEN_PLUGIN_VERSION=$(mvn help:evaluate -f asyncapi-codegen-maven-plugin/pom.xml -Dexpression=project.version -q -DforceStdout)
+          echo "CODEGEN_PLUGIN_VERSION=$CODEGEN_PLUGIN_VERSION" >> $GITHUB_ENV
+
+          CODEGEN_PLUGIN_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -L \
+            "https://repo1.maven.org/maven2/io/github/temporal-rift/asyncapi-codegen-maven-plugin/$CODEGEN_PLUGIN_VERSION/asyncapi-codegen-maven-plugin-$CODEGEN_PLUGIN_VERSION.pom")
+          echo "asyncapi-codegen-maven-plugin HTTP Status: $CODEGEN_PLUGIN_STATUS"
+          echo "CODEGEN_PLUGIN_CHANGED=$( [ "$CODEGEN_PLUGIN_STATUS" = "200" ] && echo false || echo true )" >> $GITHUB_ENV
+
       - name: Publish build-tools to Maven Central
         if: env.BUILD_TOOLS_CHANGED == 'true'
         run: mvn --batch-mode -f build-tools/pom.xml deploy -Pcentral
+
+      - name: Publish asyncapi-codegen-maven-plugin to Maven Central
+        if: env.CODEGEN_PLUGIN_CHANGED == 'true'
+        run: mvn --batch-mode -f asyncapi-codegen-maven-plugin/pom.xml deploy -Pcentral
 
       - name: Publish BOM to Maven Central
         if: env.VERSION_CHANGED == 'true'
