@@ -168,6 +168,24 @@ class JavaContractGeneratorTest {
                 .hasMessageContaining("no address");
     }
 
+    @Test
+    void boxesOptionalNumericAndBooleanFieldsButNotRequiredOnes() throws IOException, URISyntaxException {
+        AsyncApiDocument document = AsyncApiDocument.parse(fixture("optional-fields/asyncapi.yml"));
+        String source = new JavaContractGenerator(document, "io.github.temporalrift.asyncapi.optionalfields", "GeneratedChannelContract")
+                .generate(onlyChannel(document));
+
+        assertThat(source).contains("int requiredCount");
+        assertThat(source).contains("Integer optionalCount");
+        assertThat(source).contains("long requiredTotal");
+        assertThat(source).contains("Long optionalTotal");
+        assertThat(source).contains("double requiredScore");
+        assertThat(source).contains("Double optionalScore");
+        assertThat(source).contains("boolean requiredFlag");
+        assertThat(source).contains("Boolean optionalFlag");
+
+        compileOrFail(source, "optionalfields", "GeneratedChannelContract");
+    }
+
     private static AsyncApiDocument.Channel onlyChannel(AsyncApiDocument document) {
         List<AsyncApiDocument.Channel> channels = document.channels();
         assertThat(channels).hasSize(1);

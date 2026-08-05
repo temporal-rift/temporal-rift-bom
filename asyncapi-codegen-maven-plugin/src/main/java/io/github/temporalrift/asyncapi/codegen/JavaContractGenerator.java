@@ -2,6 +2,7 @@ package io.github.temporalrift.asyncapi.codegen;
 
 import java.nio.file.Path;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -154,6 +155,7 @@ final class JavaContractGenerator {
     private String recordFields(JsonNode objectSchema, Path specFile) {
         JsonNode resolved = document.resolve(objectSchema, specFile);
         JsonNode properties = resolved.path("properties");
+        Set<String> required = requiredNames(resolved);
         Map<String, String> seenFieldNames = new LinkedHashMap<>();
         StringBuilder fields = new StringBuilder();
         var fieldNames = properties.fieldNames();
@@ -170,12 +172,29 @@ final class JavaContractGenerator {
                 fields.append(", ");
             }
             first = false;
-            fields.append(javaType(properties.path(propertyName), specFile, propertyName)).append(' ').append(fieldName);
+            boolean isRequired = required.contains(propertyName);
+            fields.append(javaType(properties.path(propertyName), specFile, propertyName, isRequired))
+                    .append(' ')
+                    .append(fieldName);
         }
         return fields.toString();
     }
 
-    private String javaType(JsonNode propertySchema, Path specFile, String contextName) {
+    private static Set<String> requiredNames(JsonNode schema) {
+        Set<String> names = new LinkedHashSet<>();
+        for (JsonNode value : schema.path("required")) {
+            names.add(value.asText());
+        }
+        return names;
+    }
+
+    /**
+     * {@code required} governs only whether a primitive numeric/boolean type is boxed, so an absent or {@code null}
+     * value in the wire payload can be told apart from an actual {@code 0}/{@code false} the producer sent
+     * (Jackson otherwise silently defaults a missing primitive field to its zero value). Reference types
+     * (String/UUID/Instant/List/nested records/enums) are already nullable regardless of {@code required}.
+     */
+    private String javaType(JsonNode propertySchema, Path specFile, String contextName, boolean required) {
         String refName = null;
         if (propertySchema.has("$ref")) {
             String ref = propertySchema.path("$ref").asText();
@@ -200,11 +219,13 @@ final class JavaContractGenerator {
                 }
                 yield "String";
             }
-            case "integer" -> "int64".equals(format) ? "long" : "int";
-            case "number" -> "double";
-            case "boolean" -> "boolean";
+            case "integer" -> "int64".equals(format) ? (required ? "long" : "Long") : (required ? "int" : "Integer");
+            case "number" -> required ? "double" : "Double";
+            case "boolean" -> required ? "boolean" : "Boolean";
             case "array" -> {
-                String itemsType = javaType(schema.path("items"), specFile, contextName + "Item");
+                // an item present in a list is never itself individually absent, regardless of whether the list
+                // property is required
+                String itemsType = javaType(schema.path("items"), specFile, contextName + "Item", true);
                 yield "List<" + itemsType + ">";
             }
             case "object" -> registerRecord(refName != null ? refName : capitalize(contextName), schema, specFile);
