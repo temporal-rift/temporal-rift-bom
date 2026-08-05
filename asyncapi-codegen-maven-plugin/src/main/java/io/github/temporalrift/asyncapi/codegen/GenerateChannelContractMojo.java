@@ -108,6 +108,10 @@ public class GenerateChannelContractMojo extends AbstractMojo {
             Files.createDirectories(packageDir);
 
             List<AsyncApiDocument.Channel> channels = document.channels();
+            if (channels.isEmpty()) {
+                getLog().warn("Spec " + specFile + " declares no channels, nothing generated");
+                return;
+            }
             boolean singleChannel = channels.size() == 1;
             for (AsyncApiDocument.Channel channel : channels) {
                 String className = singleChannel ? "GeneratedChannelContract" : channelClassName(channel.key());

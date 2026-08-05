@@ -11,6 +11,7 @@ import java.util.regex.Pattern;
 import javax.lang.model.SourceVersion;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.MissingNode;
 
 /**
  * Generates a single Java contract source for one AsyncAPI channel: payload records (fields derived from each
@@ -21,11 +22,15 @@ final class JavaContractGenerator {
 
     private static final Pattern NAME_SEPARATOR = Pattern.compile("[^A-Za-z0-9]+");
     private static final String BOOLEAN_TYPE = "boolean";
+    private static final String PROPERTIES = "properties";
+    private static final String ONE_OF = "oneOf";
+    /** Placeholder claimName() schema for fixed member type names — never equal to a real parsed schema node. */
+    private static final JsonNode FIXED_TYPE_MARKER = MissingNode.getInstance();
 
     private static final Set<String> RESERVED_WORDS = Set.of(
             "abstract",
             "assert",
-            "boolean",
+            BOOLEAN_TYPE,
             "break",
             "byte",
             "case",
@@ -108,6 +113,17 @@ final class JavaContractGenerator {
                         + "\" both generate the Java identifier \"" + name + "\"");
             }
             javaNameByMessage.put(message.name(), name);
+        }
+
+        // Reserve the fixed member type names and each message's own "<Name>Payload" record name before any
+        // recursive schema generation, so a nested/inline schema that happens to normalize to the same name (e.g.
+        // an inline "fooPayload" property inside message "Foo") is rejected instead of silently colliding.
+        claimName("EventHeaders", FIXED_TYPE_MARKER);
+        claimName("Producer", FIXED_TYPE_MARKER);
+        claimName("Consumer", FIXED_TYPE_MARKER);
+        claimName("PayloadDeserializer", FIXED_TYPE_MARKER);
+        for (String messageJavaName : javaNameByMessage.values()) {
+            claimName(messageJavaName + "Payload", FIXED_TYPE_MARKER);
         }
 
         StringBuilder payloads = new StringBuilder();
@@ -268,10 +284,10 @@ final class JavaContractGenerator {
      *     since that's the base every relative child ref in {@code schema} must resolve against
      */
     private Map<String, PropertyInfo> collectProperties(JsonNode schema, Path specFile) {
-        if (schema.has("properties")) {
+        if (schema.has(PROPERTIES)) {
             Set<String> required = requiredNames(schema);
             Map<String, PropertyInfo> result = new LinkedHashMap<>();
-            JsonNode properties = schema.path("properties");
+            JsonNode properties = schema.path(PROPERTIES);
             var fieldNames = properties.fieldNames();
             while (fieldNames.hasNext()) {
                 String name = fieldNames.next();
@@ -279,8 +295,8 @@ final class JavaContractGenerator {
             }
             return result;
         }
-        if (schema.has("oneOf")) {
-            return mergeOneOfBranches(schema.path("oneOf"), specFile);
+        if (schema.has(ONE_OF)) {
+            return mergeOneOfBranches(schema.path(ONE_OF), specFile);
         }
         return Map.of();
     }
@@ -295,7 +311,7 @@ final class JavaContractGenerator {
         Map<String, Path> propertySchemaFiles = new LinkedHashMap<>();
         Map<String, String> propertyJavaTypes = new LinkedHashMap<>();
         for (AsyncApiDocument.Resolved branch : branches) {
-            JsonNode properties = branch.node().path("properties");
+            JsonNode properties = branch.node().path(PROPERTIES);
             var fieldNames = properties.fieldNames();
             while (fieldNames.hasNext()) {
                 String name = fieldNames.next();
@@ -343,7 +359,7 @@ final class JavaContractGenerator {
         Path effectiveFile = resolved.file();
         String type = schema.path("type").asText();
         // a oneOf schema has no "type" of its own; its merged branches are generated as a record, same as "object"
-        if (type.isEmpty() && schema.has("oneOf")) {
+        if (type.isEmpty() && schema.has(ONE_OF)) {
             type = "object";
         }
         String format = schema.path("format").asText(null);
@@ -397,13 +413,21 @@ final class JavaContractGenerator {
     private String registerEnum(String name, JsonNode schema) {
         claimName(name, schema);
         if (!nestedTypeSources.containsKey(name)) {
+            Set<String> seenConstants = new LinkedHashSet<>();
             StringBuilder constants = new StringBuilder();
             boolean first = true;
             for (JsonNode value : schema.path("enum")) {
                 String constant = value.asText();
-                if (!SourceVersion.isName(constant)) {
+                // isIdentifier() accepts reserved keywords too (they're lexically valid identifiers), so keywords
+                // must be rejected separately; isName() would also reject qualified (dotted) names like "FOO.BAR"
+                // outright, but that error message is less specific about what's actually wrong.
+                if (!SourceVersion.isIdentifier(constant) || RESERVED_WORDS.contains(constant)) {
                     throw new IllegalStateException("Enum value \"" + constant + "\" in schema \"" + name
                             + "\" is not a valid Java identifier");
+                }
+                if (!seenConstants.add(constant)) {
+                    throw new IllegalStateException(
+                            "Enum value \"" + constant + "\" in schema \"" + name + "\" is declared more than once");
                 }
                 if (!first) {
                     constants.append(", ");

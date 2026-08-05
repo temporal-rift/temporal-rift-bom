@@ -248,6 +248,51 @@ class JavaContractGeneratorTest {
                 .hasMessageContaining("EVENT_TYPE");
     }
 
+    @Test
+    void rejectsAnInlineSchemaCollidingWithAGeneratedPayloadRecordName() throws IOException, URISyntaxException {
+        AsyncApiDocument document = AsyncApiDocument.parse(fixture("fixed-name-collision/asyncapi.yml"));
+        AsyncApiDocument.Channel channel = onlyChannel(document);
+
+        // message "Foo" generates "FooPayload"; its own payload has an inline "fooPayload" object property that
+        // normalizes to the same name - the fixed-name reservation must catch this, not silently let it collide.
+        assertThatThrownBy(() -> new JavaContractGenerator(
+                                document,
+                                "io.github.temporalrift.asyncapi.fixednamecollision",
+                                "GeneratedChannelContract")
+                        .generate(channel))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("FooPayload");
+    }
+
+    @Test
+    void rejectsQualifiedEnumValues() throws IOException, URISyntaxException {
+        AsyncApiDocument document = AsyncApiDocument.parse(fixture("qualified-enum-value/asyncapi.yml"));
+        AsyncApiDocument.Channel channel = onlyChannel(document);
+
+        assertThatThrownBy(() -> new JavaContractGenerator(
+                                document,
+                                "io.github.temporalrift.asyncapi.qualifiedenumvalue",
+                                "GeneratedChannelContract")
+                        .generate(channel))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("FOO.BAR");
+    }
+
+    @Test
+    void rejectsDuplicateEnumValues() throws IOException, URISyntaxException {
+        AsyncApiDocument document = AsyncApiDocument.parse(fixture("duplicate-enum-value/asyncapi.yml"));
+        AsyncApiDocument.Channel channel = onlyChannel(document);
+
+        assertThatThrownBy(() -> new JavaContractGenerator(
+                                document,
+                                "io.github.temporalrift.asyncapi.duplicateenumvalue",
+                                "GeneratedChannelContract")
+                        .generate(channel))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("ACTIVE")
+                .hasMessageContaining("more than once");
+    }
+
     private static AsyncApiDocument.Channel onlyChannel(AsyncApiDocument document) {
         List<AsyncApiDocument.Channel> channels = document.channels();
         assertThat(channels).hasSize(1);

@@ -1,6 +1,7 @@
 package io.github.temporalrift.asyncapi.codegen;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -114,7 +115,7 @@ final class AsyncApiDocument {
         try {
             return YAML_MAPPER.readTree(Files.newBufferedReader(file));
         } catch (IOException e) {
-            throw new UncheckedIOExceptionWrapper(e);
+            throw new UncheckedIOException("Failed to read referenced spec file " + file, e);
         }
     }
 
@@ -135,11 +136,5 @@ final class AsyncApiDocument {
     /** The spec file this document was parsed from, for resolving refs relative to it. */
     Path specFile() {
         return specFile;
-    }
-
-    private static final class UncheckedIOExceptionWrapper extends RuntimeException {
-        UncheckedIOExceptionWrapper(IOException cause) {
-            super(cause);
-        }
     }
 }
