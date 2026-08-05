@@ -9,7 +9,6 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-
 import javax.tools.JavaCompiler;
 import javax.tools.StandardJavaFileManager;
 import javax.tools.ToolProvider;
@@ -22,7 +21,8 @@ class JavaContractGeneratorTest {
     void generatesRealActionEventContractThatCompiles() throws IOException, URISyntaxException {
         AsyncApiDocument document = AsyncApiDocument.parse(fixture("action-event/asyncapi/asyncapi.yml"));
         AsyncApiDocument.Channel channel = onlyChannel(document);
-        String source = new JavaContractGenerator(document, "io.github.temporalrift.asyncapi.actionevents", "GeneratedChannelContract")
+        String source = new JavaContractGenerator(
+                        document, "io.github.temporalrift.asyncapi.actionevents", "GeneratedChannelContract")
                 .generate(channel);
 
         assertThat(source).contains("public static final String CHANNEL = \"game.events\";");
@@ -53,7 +53,8 @@ class JavaContractGeneratorTest {
     @Test
     void generatesRealSessionEventContractThatCompiles() throws IOException, URISyntaxException {
         AsyncApiDocument document = AsyncApiDocument.parse(fixture("session-event/asyncapi/asyncapi.yml"));
-        String source = new JavaContractGenerator(document, "io.github.temporalrift.asyncapi.sessionevents", "GeneratedChannelContract")
+        String source = new JavaContractGenerator(
+                        document, "io.github.temporalrift.asyncapi.sessionevents", "GeneratedChannelContract")
                 .generate(onlyChannel(document));
         assertThat(source).contains("public record EventsDrawnFutureEvent(");
         assertThat(source).contains("public record GameEndedPlayerScoreResult(");
@@ -63,7 +64,8 @@ class JavaContractGeneratorTest {
     @Test
     void generatesRealScoringEventContractThatCompiles() throws IOException, URISyntaxException {
         AsyncApiDocument document = AsyncApiDocument.parse(fixture("scoring-event/asyncapi/asyncapi.yml"));
-        String source = new JavaContractGenerator(document, "io.github.temporalrift.asyncapi.scoringevents", "GeneratedChannelContract")
+        String source = new JavaContractGenerator(
+                        document, "io.github.temporalrift.asyncapi.scoringevents", "GeneratedChannelContract")
                 .generate(onlyChannel(document));
         assertThat(source).contains("public record ScoreUpdate(");
         compileOrFail(source, "scoringevents", "GeneratedChannelContract");
@@ -72,7 +74,8 @@ class JavaContractGeneratorTest {
     @Test
     void generatesRealTimelineEventContractThatCompiles() throws IOException, URISyntaxException {
         AsyncApiDocument document = AsyncApiDocument.parse(fixture("timeline-event/asyncapi/asyncapi.yml"));
-        String source = new JavaContractGenerator(document, "io.github.temporalrift.asyncapi.timelineevents", "GeneratedChannelContract")
+        String source = new JavaContractGenerator(
+                        document, "io.github.temporalrift.asyncapi.timelineevents", "GeneratedChannelContract")
                 .generate(onlyChannel(document));
         assertThat(source).contains("public record EraResolutionCompletedPayload(");
         compileOrFail(source, "timelineevents", "GeneratedChannelContract");
@@ -114,7 +117,8 @@ class JavaContractGeneratorTest {
     @Test
     void suffixesReservedWordFieldNamesAndCompiles() throws IOException, URISyntaxException {
         AsyncApiDocument document = AsyncApiDocument.parse(fixture("edge-cases/asyncapi.yml"));
-        String source = new JavaContractGenerator(document, "io.github.temporalrift.asyncapi.edgecases", "GeneratedChannelContract")
+        String source = new JavaContractGenerator(
+                        document, "io.github.temporalrift.asyncapi.edgecases", "GeneratedChannelContract")
                 .generate(onlyChannel(document));
 
         assertThat(source).contains("String classValue");
@@ -129,7 +133,7 @@ class JavaContractGeneratorTest {
         AsyncApiDocument.Channel channel = onlyChannel(document);
 
         assertThatThrownBy(() -> new JavaContractGenerator(
-                        document, "io.github.temporalrift.asyncapi.namecollision", "GeneratedChannelContract")
+                                document, "io.github.temporalrift.asyncapi.namecollision", "GeneratedChannelContract")
                         .generate(channel))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Metadata");
@@ -150,7 +154,7 @@ class JavaContractGeneratorTest {
         AsyncApiDocument.Channel channel = onlyChannel(document);
 
         assertThatThrownBy(() -> new JavaContractGenerator(
-                        document, "io.github.temporalrift.asyncapi.invalidenum", "GeneratedChannelContract")
+                                document, "io.github.temporalrift.asyncapi.invalidenum", "GeneratedChannelContract")
                         .generate(channel))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("in-progress");
@@ -162,7 +166,7 @@ class JavaContractGeneratorTest {
         AsyncApiDocument document = AsyncApiDocument.parse(fixture("edge-cases/asyncapi.yml"));
 
         assertThatThrownBy(() -> new JavaContractGenerator(
-                        document, "io.github.temporalrift.asyncapi.blank", "GeneratedChannelContract")
+                                document, "io.github.temporalrift.asyncapi.blank", "GeneratedChannelContract")
                         .generate(blankAddressChannel))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("no address");
@@ -171,7 +175,8 @@ class JavaContractGeneratorTest {
     @Test
     void boxesOptionalNumericAndBooleanFieldsButNotRequiredOnes() throws IOException, URISyntaxException {
         AsyncApiDocument document = AsyncApiDocument.parse(fixture("optional-fields/asyncapi.yml"));
-        String source = new JavaContractGenerator(document, "io.github.temporalrift.asyncapi.optionalfields", "GeneratedChannelContract")
+        String source = new JavaContractGenerator(
+                        document, "io.github.temporalrift.asyncapi.optionalfields", "GeneratedChannelContract")
                 .generate(onlyChannel(document));
 
         assertThat(source).contains("int requiredCount");

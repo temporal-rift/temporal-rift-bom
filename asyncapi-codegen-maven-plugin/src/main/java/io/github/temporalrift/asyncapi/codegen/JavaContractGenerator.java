@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
-
 import javax.lang.model.SourceVersion;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -20,14 +19,63 @@ import com.fasterxml.jackson.databind.JsonNode;
 final class JavaContractGenerator {
 
     private static final Pattern NAME_SEPARATOR = Pattern.compile("[^A-Za-z0-9]+");
+    private static final String BOOLEAN_TYPE = "boolean";
 
     private static final Set<String> RESERVED_WORDS = Set.of(
-            "abstract", "assert", "boolean", "break", "byte", "case", "catch", "char", "class", "const",
-            "continue", "default", "do", "double", "else", "enum", "extends", "final", "finally", "float",
-            "for", "goto", "if", "implements", "import", "instanceof", "int", "interface", "long", "native",
-            "new", "package", "private", "protected", "public", "return", "short", "static", "strictfp",
-            "super", "switch", "synchronized", "this", "throw", "throws", "transient", "try", "void",
-            "volatile", "while", "true", "false", "null", "_");
+            "abstract",
+            "assert",
+            "boolean",
+            "break",
+            "byte",
+            "case",
+            "catch",
+            "char",
+            "class",
+            "const",
+            "continue",
+            "default",
+            "do",
+            "double",
+            "else",
+            "enum",
+            "extends",
+            "final",
+            "finally",
+            "float",
+            "for",
+            "goto",
+            "if",
+            "implements",
+            "import",
+            "instanceof",
+            "int",
+            "interface",
+            "long",
+            "native",
+            "new",
+            "package",
+            "private",
+            "protected",
+            "public",
+            "return",
+            "short",
+            "static",
+            "strictfp",
+            "super",
+            "switch",
+            "synchronized",
+            "this",
+            "throw",
+            "throws",
+            "transient",
+            "try",
+            "void",
+            "volatile",
+            "while",
+            "true",
+            "false",
+            "null",
+            "_");
 
     private final AsyncApiDocument document;
     private final String javaPackage;
@@ -70,18 +118,37 @@ final class JavaContractGenerator {
             String name = javaNameByMessage.get(message.name());
             String eventTypeConstant = eventTypeConstantName(name);
 
-            payloads.append("    public record ").append(name).append("Payload(")
+            payloads.append("    public record ")
+                    .append(name)
+                    .append("Payload(")
                     .append(recordFields(message.payloadSchema(), document.specFile()))
                     .append(") {}\n");
-            payloads.append("    public static final String ").append(eventTypeConstant).append(" = \"")
-                    .append(stringLiteral(message.name())).append("\";\n\n");
+            payloads.append("    public static final String ")
+                    .append(eventTypeConstant)
+                    .append(" = \"")
+                    .append(stringLiteral(message.name()))
+                    .append("\";\n\n");
 
-            producerMethods.append("        boolean publish").append(name).append('(').append(name)
+            producerMethods
+                    .append("        boolean publish")
+                    .append(name)
+                    .append('(')
+                    .append(name)
                     .append("Payload payload, EventHeaders headers);\n");
-            consumerMethods.append("        void on").append(name).append('(').append(name)
+            consumerMethods
+                    .append("        void on")
+                    .append(name)
+                    .append('(')
+                    .append(name)
                     .append("Payload payload, EventHeaders headers);\n");
-            dispatchCases.append("            case ").append(eventTypeConstant).append(" -> on").append(name)
-                    .append("(deserializer.deserialize(rawPayload, ").append(name).append("Payload.class), headers);\n");
+            dispatchCases
+                    .append("            case ")
+                    .append(eventTypeConstant)
+                    .append(" -> on")
+                    .append(name)
+                    .append("(deserializer.deserialize(rawPayload, ")
+                    .append(name)
+                    .append("Payload.class), headers);\n");
         }
 
         StringBuilder nestedTypesSource = new StringBuilder();
@@ -124,15 +191,18 @@ final class JavaContractGenerator {
 
                     public interface Consumer {
                 %s
-                        default void dispatch(String eventType, Object rawPayload, EventHeaders headers, PayloadDeserializer deserializer) {
+                        default void dispatch(
+                                String eventType,
+                                Object rawPayload,
+                                EventHeaders headers,
+                                PayloadDeserializer deserializer) {
                             switch (eventType) {
                 %s            default -> throw new IllegalArgumentException("Unknown eventType: " + eventType);
                             }
                         }
                     }
                 }
-                """
-                .formatted(
+                """.formatted(
                         javaPackage,
                         className,
                         stringLiteral(address),
@@ -195,33 +265,16 @@ final class JavaContractGenerator {
      * (String/UUID/Instant/List/nested records/enums) are already nullable regardless of {@code required}.
      */
     private String javaType(JsonNode propertySchema, Path specFile, String contextName, boolean required) {
-        String refName = null;
-        if (propertySchema.has("$ref")) {
-            String ref = propertySchema.path("$ref").asText();
-            String fragment = ref.contains("#") ? ref.substring(ref.indexOf('#') + 1) : ref;
-            int lastSlash = fragment.lastIndexOf('/');
-            refName = lastSlash >= 0 ? fragment.substring(lastSlash + 1) : fragment;
-        }
+        String refName = extractRefName(propertySchema);
         JsonNode schema = document.resolve(propertySchema, specFile);
         String type = schema.path("type").asText();
         String format = schema.path("format").asText(null);
 
         return switch (type) {
-            case "string" -> {
-                if (schema.has("enum")) {
-                    yield registerEnum(refName != null ? refName : capitalize(contextName), schema);
-                }
-                if ("uuid".equals(format)) {
-                    yield "UUID";
-                }
-                if ("date-time".equals(format)) {
-                    yield "Instant";
-                }
-                yield "String";
-            }
-            case "integer" -> "int64".equals(format) ? (required ? "long" : "Long") : (required ? "int" : "Integer");
+            case "string" -> stringJavaType(schema, format, refName, contextName);
+            case "integer" -> integerJavaType(format, required);
             case "number" -> required ? "double" : "Double";
-            case "boolean" -> required ? "boolean" : "Boolean";
+            case BOOLEAN_TYPE -> required ? BOOLEAN_TYPE : "Boolean";
             case "array" -> {
                 // an item present in a list is never itself individually absent, regardless of whether the list
                 // property is required
@@ -233,6 +286,36 @@ final class JavaContractGenerator {
         };
     }
 
+    private static String extractRefName(JsonNode propertySchema) {
+        if (!propertySchema.has("$ref")) {
+            return null;
+        }
+        String ref = propertySchema.path("$ref").asText();
+        String fragment = ref.contains("#") ? ref.substring(ref.indexOf('#') + 1) : ref;
+        int lastSlash = fragment.lastIndexOf('/');
+        return lastSlash >= 0 ? fragment.substring(lastSlash + 1) : fragment;
+    }
+
+    private String stringJavaType(JsonNode schema, String format, String refName, String contextName) {
+        if (schema.has("enum")) {
+            return registerEnum(refName != null ? refName : capitalize(contextName), schema);
+        }
+        if ("uuid".equals(format)) {
+            return "UUID";
+        }
+        if ("date-time".equals(format)) {
+            return "Instant";
+        }
+        return "String";
+    }
+
+    private static String integerJavaType(String format, boolean required) {
+        if ("int64".equals(format)) {
+            return required ? "long" : "Long";
+        }
+        return required ? "int" : "Integer";
+    }
+
     private String registerEnum(String name, JsonNode schema) {
         claimName(name, schema);
         if (!nestedTypeSources.containsKey(name)) {
@@ -241,8 +324,8 @@ final class JavaContractGenerator {
             for (JsonNode value : schema.path("enum")) {
                 String constant = value.asText();
                 if (!SourceVersion.isName(constant)) {
-                    throw new IllegalStateException(
-                            "Enum value \"" + constant + "\" in schema \"" + name + "\" is not a valid Java identifier");
+                    throw new IllegalStateException("Enum value \"" + constant + "\" in schema \"" + name
+                            + "\" is not a valid Java identifier");
                 }
                 if (!first) {
                     constants.append(", ");

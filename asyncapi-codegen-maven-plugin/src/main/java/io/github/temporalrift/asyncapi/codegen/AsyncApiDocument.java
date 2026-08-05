@@ -76,8 +76,9 @@ final class AsyncApiDocument {
         int guard = 0;
         while (current.has("$ref")) {
             if (guard++ >= MAX_REF_DEPTH) {
-                throw new IllegalStateException("Unresolvable or circular $ref chain starting in " + currentFile
-                        + ", exceeded " + MAX_REF_DEPTH + " hops at " + current.path("$ref").asText());
+                throw new IllegalStateException(
+                        "Unresolvable or circular $ref chain starting in " + currentFile + ", exceeded " + MAX_REF_DEPTH
+                                + " hops at " + current.path("$ref").asText());
             }
             String ref = current.path("$ref").asText();
             int hashIndex = ref.indexOf('#');
@@ -86,7 +87,11 @@ final class AsyncApiDocument {
 
             Path targetFile = filePart.isEmpty()
                     ? currentFileRef
-                    : currentFileRef.toAbsolutePath().getParent().resolve(filePart).normalize();
+                    : currentFileRef
+                            .toAbsolutePath()
+                            .getParent()
+                            .resolve(filePart)
+                            .normalize();
             JsonNode targetRoot = fileCache.computeIfAbsent(targetFile, this::loadFile);
             current = navigateFragment(targetRoot, fragment);
             if (current.isMissingNode()) {

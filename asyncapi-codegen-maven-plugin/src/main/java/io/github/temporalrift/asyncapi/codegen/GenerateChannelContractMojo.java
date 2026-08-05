@@ -142,9 +142,8 @@ public class GenerateChannelContractMojo extends AbstractMojo {
     private static String slugify(String title, Path specFile) throws MojoExecutionException {
         String slug = title.replaceAll("[^A-Za-z0-9]", "").toLowerCase(java.util.Locale.ROOT);
         if (slug.isEmpty()) {
-            throw new MojoExecutionException(
-                    "Spec " + specFile + " has info.title \"" + title + "\", which has no alphanumeric characters"
-                            + " to derive a package name from");
+            throw new MojoExecutionException("Spec " + specFile + " has info.title \"" + title
+                    + "\", which has no alphanumeric characters" + " to derive a package name from");
         }
         return slug;
     }

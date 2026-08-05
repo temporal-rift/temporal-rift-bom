@@ -78,9 +78,11 @@ class GenerateChannelContractMojoTest {
 
         mojo.execute();
 
-        assertThat(tempDir.resolve("generated-sources/io/github/temporalrift/asyncapi/firsttitle/GeneratedChannelContract.java"))
+        assertThat(tempDir.resolve(
+                        "generated-sources/io/github/temporalrift/asyncapi/firsttitle/GeneratedChannelContract.java"))
                 .exists();
-        assertThat(tempDir.resolve("generated-sources/io/github/temporalrift/asyncapi/secondtitle/GeneratedChannelContract.java"))
+        assertThat(tempDir.resolve(
+                        "generated-sources/io/github/temporalrift/asyncapi/secondtitle/GeneratedChannelContract.java"))
                 .exists();
     }
 
