@@ -9,6 +9,7 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import javax.lang.model.SourceVersion;
 
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -125,14 +126,15 @@ public class GenerateChannelContractMojo extends AbstractMojo {
     }
 
     /**
-     * Rejects a second, different spec file writing to a destination another spec already claimed this run —
-     * regardless of why the two collided (identical info.title, or two different titles that happen to slugify
-     * the same way). This is deliberately independent of any single consuming service's unpack layout: it compares
-     * final destinations, not titles or paths, so it holds no matter how a future consumer unpacks its dependencies.
+     * Rejects any second write to a destination another channel already claimed this run — whether the collision
+     * comes from two different spec files (identical info.title, or two different titles that happen to slugify
+     * the same way) or from two distinct channels in the same multi-channel spec whose keys produce the same class
+     * name (e.g. "gameEvents" and "game-events" both -> GeneratedGameEventsContract). Each channel is claimed
+     * exactly once per run, so there is no legitimate reason for a destination to be claimed twice.
      */
     private void claimDestination(Path destination, Path specFile) throws MojoExecutionException {
         Path previousSpecFile = claimedDestinations.putIfAbsent(destination, specFile);
-        if (previousSpecFile != null && !previousSpecFile.equals(specFile)) {
+        if (previousSpecFile != null) {
             throw new MojoExecutionException(
                     "Specs " + previousSpecFile + " and " + specFile + " both generate " + destination);
         }
@@ -141,9 +143,9 @@ public class GenerateChannelContractMojo extends AbstractMojo {
     /** Derives a package-safe name from the spec's own {@code info.title}, e.g. "Action events" -> "actionevents". */
     private static String slugify(String title, Path specFile) throws MojoExecutionException {
         String slug = title.replaceAll("[^A-Za-z0-9]", "").toLowerCase(java.util.Locale.ROOT);
-        if (slug.isEmpty()) {
+        if (slug.isEmpty() || !SourceVersion.isName(slug)) {
             throw new MojoExecutionException("Spec " + specFile + " has info.title \"" + title
-                    + "\", which has no alphanumeric characters" + " to derive a package name from");
+                    + "\", which does not produce a valid Java package name segment (got \"" + slug + "\")");
         }
         return slug;
     }

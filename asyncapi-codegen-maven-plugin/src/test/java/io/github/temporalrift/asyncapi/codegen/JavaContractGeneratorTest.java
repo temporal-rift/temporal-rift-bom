@@ -78,6 +78,17 @@ class JavaContractGeneratorTest {
                         document, "io.github.temporalrift.asyncapi.timelineevents", "GeneratedChannelContract")
                 .generate(onlyChannel(document));
         assertThat(source).contains("public record EraResolutionCompletedPayload(");
+
+        // the array item type must resolve to the merged record, not fall through to Object
+        assertThat(source).contains("List<EraTerminalResolution> terminalResolutions");
+
+        // EraTerminalResolution has no properties of its own, only a oneOf of two branches - the generated record
+        // must merge both branches' fields rather than come out empty. winningOutcomeId is required in only one
+        // branch, so it must still be present in the merged record (as a nullable UUID, not dropped).
+        assertThat(source)
+                .contains("public record EraTerminalResolution(UUID eventId, int revealIndex, String terminalState, "
+                        + "UUID winningOutcomeId)");
+
         compileOrFail(source, "timelineevents", "GeneratedChannelContract");
     }
 

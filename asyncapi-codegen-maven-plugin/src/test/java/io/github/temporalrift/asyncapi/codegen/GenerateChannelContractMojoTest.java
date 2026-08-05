@@ -86,6 +86,88 @@ class GenerateChannelContractMojoTest {
                 .exists();
     }
 
+    @Test
+    void rejectsTwoChannelsInTheSameSpecProducingTheSameClassName(@org.junit.jupiter.api.io.TempDir Path tempDir)
+            throws IOException {
+        // "gameEvents" and "game-events" both strip down to the same javaName, so both channels resolve to
+        // GeneratedGameEventsContract - the same specFile exemption previously let the second overwrite the first.
+        String spec = """
+                asyncapi: 3.0.0
+                info:
+                  title: Colliding channel keys
+                  version: 1.0.0
+                servers:
+                  kafka:
+                    host: localhost:9092
+                    protocol: kafka
+                channels:
+                  gameEvents:
+                    address: game.events
+                    messages:
+                      thingOne:
+                        $ref: '#/components/messages/ThingOne'
+                  game-events:
+                    address: other.events
+                    messages:
+                      thingTwo:
+                        $ref: '#/components/messages/ThingTwo'
+                operations:
+                  publishThingOne:
+                    action: send
+                    channel: { $ref: '#/channels/gameEvents' }
+                    messages: [ { $ref: '#/channels/gameEvents/messages/thingOne' } ]
+                  publishThingTwo:
+                    action: send
+                    channel: { $ref: '#/channels/game-events' }
+                    messages: [ { $ref: '#/channels/game-events/messages/thingTwo' } ]
+                components:
+                  messages:
+                    ThingOne:
+                      name: ThingOne
+                      payload:
+                        type: object
+                        properties:
+                          gameId: { type: string, format: uuid }
+                        required: [ gameId ]
+                    ThingTwo:
+                      name: ThingTwo
+                      payload:
+                        type: object
+                        properties:
+                          gameId: { type: string, format: uuid }
+                        required: [ gameId ]
+                """;
+        Path specDir =
+                tempDir.resolve("dependency-specs").resolve("colliding-spec").resolve("asyncapi");
+        Files.createDirectories(specDir);
+        Files.writeString(specDir.resolve("asyncapi.yml"), spec);
+
+        GenerateChannelContractMojo mojo = new GenerateChannelContractMojo();
+        mojo.project = new MavenProject();
+        mojo.dependencySpecsDirectory = tempDir.resolve("dependency-specs").toString();
+        mojo.outputDirectory = tempDir.resolve("generated-sources").toString();
+
+        assertThatThrownBy(mojo::execute)
+                .isInstanceOf(MojoExecutionException.class)
+                .hasMessageContaining("GeneratedGameEventsContract.java");
+    }
+
+    @Test
+    void rejectsATitleWhoseSlugIsNotAValidJavaIdentifier(@org.junit.jupiter.api.io.TempDir Path tempDir)
+            throws IOException {
+        // "New" slugifies to "new", a Java keyword; invalid as a package name segment even though it's non-empty.
+        writeSpec(tempDir, "keyword-spec", "New", "thingOne", "ThingOne");
+
+        GenerateChannelContractMojo mojo = new GenerateChannelContractMojo();
+        mojo.project = new MavenProject();
+        mojo.dependencySpecsDirectory = tempDir.resolve("dependency-specs").toString();
+        mojo.outputDirectory = tempDir.resolve("generated-sources").toString();
+
+        assertThatThrownBy(mojo::execute)
+                .isInstanceOf(MojoExecutionException.class)
+                .hasMessageContaining("New");
+    }
+
     private static void writeSpec(Path tempDir, String specDirName, String title, String messageKey, String messageName)
             throws IOException {
         Path specDir = tempDir.resolve("dependency-specs").resolve(specDirName).resolve("asyncapi");

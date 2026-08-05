@@ -1,6 +1,7 @@
 package io.github.temporalrift.asyncapi.codegen;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -224,14 +225,12 @@ final class JavaContractGenerator {
 
     private String recordFields(JsonNode objectSchema, Path specFile) {
         JsonNode resolved = document.resolve(objectSchema, specFile);
-        JsonNode properties = resolved.path("properties");
-        Set<String> required = requiredNames(resolved);
+        Map<String, PropertyInfo> properties = collectProperties(resolved, specFile);
         Map<String, String> seenFieldNames = new LinkedHashMap<>();
         StringBuilder fields = new StringBuilder();
-        var fieldNames = properties.fieldNames();
         boolean first = true;
-        while (fieldNames.hasNext()) {
-            String propertyName = fieldNames.next();
+        for (Map.Entry<String, PropertyInfo> entry : properties.entrySet()) {
+            String propertyName = entry.getKey();
             String fieldName = javaName(propertyName);
             String collidesWith = seenFieldNames.put(fieldName, propertyName);
             if (collidesWith != null) {
@@ -242,12 +241,74 @@ final class JavaContractGenerator {
                 fields.append(", ");
             }
             first = false;
-            boolean isRequired = required.contains(propertyName);
-            fields.append(javaType(properties.path(propertyName), specFile, propertyName, isRequired))
+            PropertyInfo info = entry.getValue();
+            fields.append(javaType(info.schema(), specFile, propertyName, info.required()))
                     .append(' ')
                     .append(fieldName);
         }
         return fields.toString();
+    }
+
+    private record PropertyInfo(JsonNode schema, boolean required) {}
+
+    /**
+     * A schema with its own {@code properties} is the common case. A schema with no {@code properties} but a
+     * {@code oneOf} has none of its own — each branch independently validates the payload — so this merges every
+     * branch's properties into one flat record, since a Java record cannot represent a discriminated union. A
+     * property present in every branch's own {@code required} list stays required; one that's absent from some
+     * branch, or merely optional in some branch, becomes optional overall.
+     */
+    private Map<String, PropertyInfo> collectProperties(JsonNode schema, Path specFile) {
+        if (schema.has("properties")) {
+            Set<String> required = requiredNames(schema);
+            Map<String, PropertyInfo> result = new LinkedHashMap<>();
+            JsonNode properties = schema.path("properties");
+            var fieldNames = properties.fieldNames();
+            while (fieldNames.hasNext()) {
+                String name = fieldNames.next();
+                result.put(name, new PropertyInfo(properties.path(name), required.contains(name)));
+            }
+            return result;
+        }
+        if (schema.has("oneOf")) {
+            return mergeOneOfBranches(schema.path("oneOf"), specFile);
+        }
+        return Map.of();
+    }
+
+    private Map<String, PropertyInfo> mergeOneOfBranches(JsonNode oneOf, Path specFile) {
+        List<JsonNode> branches = new ArrayList<>();
+        for (JsonNode branch : oneOf) {
+            branches.add(document.resolve(branch, specFile));
+        }
+
+        Map<String, JsonNode> propertySchemas = new LinkedHashMap<>();
+        Map<String, String> propertyJavaTypes = new LinkedHashMap<>();
+        for (JsonNode branch : branches) {
+            JsonNode properties = branch.path("properties");
+            var fieldNames = properties.fieldNames();
+            while (fieldNames.hasNext()) {
+                String name = fieldNames.next();
+                JsonNode propertySchema = properties.path(name);
+                propertySchemas.putIfAbsent(name, propertySchema);
+                String javaTypeName = javaType(propertySchema, specFile, name, true);
+                String previousType = propertyJavaTypes.putIfAbsent(name, javaTypeName);
+                if (previousType != null && !previousType.equals(javaTypeName)) {
+                    throw new IllegalStateException("oneOf branches in " + specFile
+                            + " disagree on the type of property \"" + name + "\": \"" + previousType + "\" vs \""
+                            + javaTypeName + "\"");
+                }
+            }
+        }
+
+        Map<String, PropertyInfo> merged = new LinkedHashMap<>();
+        for (Map.Entry<String, JsonNode> entry : propertySchemas.entrySet()) {
+            String name = entry.getKey();
+            boolean requiredInEveryBranch =
+                    branches.stream().allMatch(branch -> requiredNames(branch).contains(name));
+            merged.put(name, new PropertyInfo(entry.getValue(), requiredInEveryBranch));
+        }
+        return merged;
     }
 
     private static Set<String> requiredNames(JsonNode schema) {
@@ -268,6 +329,10 @@ final class JavaContractGenerator {
         String refName = extractRefName(propertySchema);
         JsonNode schema = document.resolve(propertySchema, specFile);
         String type = schema.path("type").asText();
+        // a oneOf schema has no "type" of its own; its merged branches are generated as a record, same as "object"
+        if (type.isEmpty() && schema.has("oneOf")) {
+            type = "object";
+        }
         String format = schema.path("format").asText(null);
 
         return switch (type) {
