@@ -1,0 +1,7 @@
+FooPayload:
+  type: object
+  properties:
+    gameId: { type: string, format: uuid }
+    status:
+      $ref: './enums.yaml#/Status'
+  required: [ gameId, status ]

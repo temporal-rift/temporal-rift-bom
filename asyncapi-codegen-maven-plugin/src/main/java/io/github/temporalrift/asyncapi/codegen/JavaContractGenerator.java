@@ -114,15 +114,21 @@ final class JavaContractGenerator {
         StringBuilder producerMethods = new StringBuilder();
         StringBuilder consumerMethods = new StringBuilder();
         StringBuilder dispatchCases = new StringBuilder();
+        Map<String, String> seenEventTypeConstants = new LinkedHashMap<>();
 
         for (AsyncApiDocument.Message message : messages) {
             String name = javaNameByMessage.get(message.name());
             String eventTypeConstant = eventTypeConstantName(name);
+            String collidesWithEventType = seenEventTypeConstants.put(eventTypeConstant, message.name());
+            if (collidesWithEventType != null) {
+                throw new IllegalStateException("Message names \"" + collidesWithEventType + "\" and \""
+                        + message.name() + "\" both generate the EVENT_TYPE constant \"" + eventTypeConstant + "\"");
+            }
 
             payloads.append("    public record ")
                     .append(name)
                     .append("Payload(")
-                    .append(recordFields(message.payloadSchema(), document.specFile()))
+                    .append(recordFields(message.payloadSchema(), message.payloadSchemaFile()))
                     .append(") {}\n");
             payloads.append("    public static final String ")
                     .append(eventTypeConstant)
@@ -224,8 +230,8 @@ final class JavaContractGenerator {
     }
 
     private String recordFields(JsonNode objectSchema, Path specFile) {
-        JsonNode resolved = document.resolve(objectSchema, specFile);
-        Map<String, PropertyInfo> properties = collectProperties(resolved, specFile);
+        AsyncApiDocument.Resolved resolved = document.resolve(objectSchema, specFile);
+        Map<String, PropertyInfo> properties = collectProperties(resolved.node(), resolved.file());
         Map<String, String> seenFieldNames = new LinkedHashMap<>();
         StringBuilder fields = new StringBuilder();
         boolean first = true;
@@ -242,14 +248,14 @@ final class JavaContractGenerator {
             }
             first = false;
             PropertyInfo info = entry.getValue();
-            fields.append(javaType(info.schema(), specFile, propertyName, info.required()))
+            fields.append(javaType(info.schema(), info.schemaFile(), propertyName, info.required()))
                     .append(' ')
                     .append(fieldName);
         }
         return fields.toString();
     }
 
-    private record PropertyInfo(JsonNode schema, boolean required) {}
+    private record PropertyInfo(JsonNode schema, boolean required, Path schemaFile) {}
 
     /**
      * A schema with its own {@code properties} is the common case. A schema with no {@code properties} but a
@@ -257,6 +263,9 @@ final class JavaContractGenerator {
      * branch's properties into one flat record, since a Java record cannot represent a discriminated union. A
      * property present in every branch's own {@code required} list stays required; one that's absent from some
      * branch, or merely optional in some branch, becomes optional overall.
+     *
+     * @param specFile the file {@code schema} was actually resolved from (not necessarily the entry spec file),
+     *     since that's the base every relative child ref in {@code schema} must resolve against
      */
     private Map<String, PropertyInfo> collectProperties(JsonNode schema, Path specFile) {
         if (schema.has("properties")) {
@@ -266,7 +275,7 @@ final class JavaContractGenerator {
             var fieldNames = properties.fieldNames();
             while (fieldNames.hasNext()) {
                 String name = fieldNames.next();
-                result.put(name, new PropertyInfo(properties.path(name), required.contains(name)));
+                result.put(name, new PropertyInfo(properties.path(name), required.contains(name), specFile));
             }
             return result;
         }
@@ -277,21 +286,23 @@ final class JavaContractGenerator {
     }
 
     private Map<String, PropertyInfo> mergeOneOfBranches(JsonNode oneOf, Path specFile) {
-        List<JsonNode> branches = new ArrayList<>();
+        List<AsyncApiDocument.Resolved> branches = new ArrayList<>();
         for (JsonNode branch : oneOf) {
             branches.add(document.resolve(branch, specFile));
         }
 
         Map<String, JsonNode> propertySchemas = new LinkedHashMap<>();
+        Map<String, Path> propertySchemaFiles = new LinkedHashMap<>();
         Map<String, String> propertyJavaTypes = new LinkedHashMap<>();
-        for (JsonNode branch : branches) {
-            JsonNode properties = branch.path("properties");
+        for (AsyncApiDocument.Resolved branch : branches) {
+            JsonNode properties = branch.node().path("properties");
             var fieldNames = properties.fieldNames();
             while (fieldNames.hasNext()) {
                 String name = fieldNames.next();
                 JsonNode propertySchema = properties.path(name);
                 propertySchemas.putIfAbsent(name, propertySchema);
-                String javaTypeName = javaType(propertySchema, specFile, name, true);
+                propertySchemaFiles.putIfAbsent(name, branch.file());
+                String javaTypeName = javaType(propertySchema, branch.file(), name, true);
                 String previousType = propertyJavaTypes.putIfAbsent(name, javaTypeName);
                 if (previousType != null && !previousType.equals(javaTypeName)) {
                     throw new IllegalStateException("oneOf branches in " + specFile
@@ -304,9 +315,9 @@ final class JavaContractGenerator {
         Map<String, PropertyInfo> merged = new LinkedHashMap<>();
         for (Map.Entry<String, JsonNode> entry : propertySchemas.entrySet()) {
             String name = entry.getKey();
-            boolean requiredInEveryBranch =
-                    branches.stream().allMatch(branch -> requiredNames(branch).contains(name));
-            merged.put(name, new PropertyInfo(entry.getValue(), requiredInEveryBranch));
+            boolean requiredInEveryBranch = branches.stream()
+                    .allMatch(branch -> requiredNames(branch.node()).contains(name));
+            merged.put(name, new PropertyInfo(entry.getValue(), requiredInEveryBranch, propertySchemaFiles.get(name)));
         }
         return merged;
     }
@@ -327,7 +338,9 @@ final class JavaContractGenerator {
      */
     private String javaType(JsonNode propertySchema, Path specFile, String contextName, boolean required) {
         String refName = extractRefName(propertySchema);
-        JsonNode schema = document.resolve(propertySchema, specFile);
+        AsyncApiDocument.Resolved resolved = document.resolve(propertySchema, specFile);
+        JsonNode schema = resolved.node();
+        Path effectiveFile = resolved.file();
         String type = schema.path("type").asText();
         // a oneOf schema has no "type" of its own; its merged branches are generated as a record, same as "object"
         if (type.isEmpty() && schema.has("oneOf")) {
@@ -343,10 +356,10 @@ final class JavaContractGenerator {
             case "array" -> {
                 // an item present in a list is never itself individually absent, regardless of whether the list
                 // property is required
-                String itemsType = javaType(schema.path("items"), specFile, contextName + "Item", true);
+                String itemsType = javaType(schema.path("items"), effectiveFile, contextName + "Item", true);
                 yield "List<" + itemsType + ">";
             }
-            case "object" -> registerRecord(refName != null ? refName : capitalize(contextName), schema, specFile);
+            case "object" -> registerRecord(capitalize(refName != null ? refName : contextName), schema, effectiveFile);
             default -> "Object";
         };
     }
@@ -363,7 +376,7 @@ final class JavaContractGenerator {
 
     private String stringJavaType(JsonNode schema, String format, String refName, String contextName) {
         if (schema.has("enum")) {
-            return registerEnum(refName != null ? refName : capitalize(contextName), schema);
+            return registerEnum(capitalize(refName != null ? refName : contextName), schema);
         }
         if ("uuid".equals(format)) {
             return "UUID";

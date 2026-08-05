@@ -32,9 +32,12 @@ final class AsyncApiDocument {
         return new AsyncApiDocument(root, specFile);
     }
 
-    record Message(String name, JsonNode payloadSchema) {}
+    record Message(String name, JsonNode payloadSchema, Path payloadSchemaFile) {}
 
     record Channel(String key, String address, List<Message> messages) {}
+
+    /** A schema node paired with the file it was actually resolved from, for correctly resolving its own child refs. */
+    record Resolved(JsonNode node, Path file) {}
 
     /** Every channel declared in the document, each with only its own messages, in declaration order. */
     List<Channel> channels() {
@@ -57,10 +60,11 @@ final class AsyncApiDocument {
         while (fieldNames.hasNext()) {
             String key = fieldNames.next();
             JsonNode messageRef = channelMessages.path(key);
-            JsonNode message = resolve(messageRef, specFile);
-            String name = message.path("name").asText(key);
-            JsonNode payload = resolve(message.path("payload"), specFile);
-            messages.add(new Message(name, payload));
+            Resolved message = resolve(messageRef, specFile);
+            String name = message.node().path("name").asText(key);
+            // "payload" is resolved relative to the file the message itself was found in, not the entry spec file
+            Resolved payload = resolve(message.node().path("payload"), message.file());
+            messages.add(new Message(name, payload.node(), payload.file()));
         }
         return messages;
     }
@@ -69,8 +73,12 @@ final class AsyncApiDocument {
         return root.path("info").path("title").asText("");
     }
 
-    /** Resolves a possibly-$ref'd node against the file it was read from, following chained refs. */
-    JsonNode resolve(JsonNode node, Path currentFile) {
+    /**
+     * Resolves a possibly-$ref'd node against the file it was read from, following chained refs. Returns not just
+     * the resolved node but the file it was ultimately found in, since a resolved schema's own child refs must be
+     * resolved relative to that file — not the original entry spec file — once a cross-file hop has occurred.
+     */
+    Resolved resolve(JsonNode node, Path currentFile) {
         JsonNode current = node;
         Path currentFileRef = currentFile;
         int guard = 0;
@@ -99,7 +107,7 @@ final class AsyncApiDocument {
             }
             currentFileRef = targetFile;
         }
-        return current;
+        return new Resolved(current, currentFileRef);
     }
 
     private JsonNode loadFile(Path file) {

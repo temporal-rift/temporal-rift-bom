@@ -202,6 +202,52 @@ class JavaContractGeneratorTest {
         compileOrFail(source, "optionalfields", "GeneratedChannelContract");
     }
 
+    @Test
+    void normalizesRefFragmentNamesBeforeDeclaringGeneratedTypes() throws IOException, URISyntaxException {
+        AsyncApiDocument document = AsyncApiDocument.parse(fixture("ref-name-normalization/asyncapi.yml"));
+        String source = new JavaContractGenerator(
+                        document, "io.github.temporalrift.asyncapi.refnamenormalization", "GeneratedChannelContract")
+                .generate(onlyChannel(document));
+
+        // "#/components/schemas/status-type" must not emit the raw, non-identifier fragment "status-type"
+        assertThat(source).contains("public enum StatusType {");
+        // "#/components/schemas/new" is both hyphen-free and a reserved word - the existing Value-suffix path applies
+        assertThat(source).contains("public record NewValue(");
+
+        compileOrFail(source, "refnamenormalization", "GeneratedChannelContract");
+    }
+
+    @Test
+    void resolvesRelativeRefsAgainstTheFileTheyActuallyAppearIn() throws IOException, URISyntaxException {
+        AsyncApiDocument document = AsyncApiDocument.parse(fixture("cross-file-ref/asyncapi/asyncapi.yml"));
+        String source = new JavaContractGenerator(
+                        document, "io.github.temporalrift.asyncapi.crossfileref", "GeneratedChannelContract")
+                .generate(onlyChannel(document));
+
+        // FooPayload comes from shared/payload.yaml; its "status" property is "./enums.yaml#/Status", relative to
+        // shared/payload.yaml (-> shared/enums.yaml), not relative to the entry asyncapi.yml's own directory.
+        assertThat(source).contains("public enum Status { ACTIVE, INACTIVE }");
+        assertThat(source).contains("Status status");
+
+        compileOrFail(source, "crossfileref", "GeneratedChannelContract");
+    }
+
+    @Test
+    void rejectsEventTypeConstantCollisionsFromDifferentlyCasedMessageNames() throws IOException, URISyntaxException {
+        AsyncApiDocument document = AsyncApiDocument.parse(fixture("event-type-collision/asyncapi.yml"));
+        AsyncApiDocument.Channel channel = onlyChannel(document);
+
+        assertThatThrownBy(() -> new JavaContractGenerator(
+                                document,
+                                "io.github.temporalrift.asyncapi.eventtypecollision",
+                                "GeneratedChannelContract")
+                        .generate(channel))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("AB")
+                .hasMessageContaining("aB")
+                .hasMessageContaining("EVENT_TYPE");
+    }
+
     private static AsyncApiDocument.Channel onlyChannel(AsyncApiDocument document) {
         List<AsyncApiDocument.Channel> channels = document.channels();
         assertThat(channels).hasSize(1);

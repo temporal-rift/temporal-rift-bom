@@ -1,0 +1,49 @@
+asyncapi: 3.0.0
+info:
+  title: Event type collision fixture
+  version: 1.0.0
+
+servers:
+  kafka:
+    host: localhost:9092
+    protocol: kafka
+
+channels:
+  gameEvents:
+    address: game.events
+    messages:
+      ab:
+        $ref: '#/components/messages/AB'
+      aB:
+        $ref: '#/components/messages/aB'
+
+operations:
+  publishAB:
+    action: send
+    channel:
+      $ref: '#/channels/gameEvents'
+    messages:
+      - $ref: '#/channels/gameEvents/messages/ab'
+  publishAb:
+    action: send
+    channel:
+      $ref: '#/channels/gameEvents'
+    messages:
+      - $ref: '#/channels/gameEvents/messages/aB'
+
+components:
+  messages:
+    AB:
+      name: AB
+      payload:
+        type: object
+        properties:
+          gameId: { type: string, format: uuid }
+        required: [ gameId ]
+    aB:
+      name: aB
+      payload:
+        type: object
+        properties:
+          gameId: { type: string, format: uuid }
+        required: [ gameId ]
