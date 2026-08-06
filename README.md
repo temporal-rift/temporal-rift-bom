@@ -65,10 +65,13 @@ and role are specific to that service.
 ```
 
 
-`role=client` generates a consumer instead — use `consumerApiPackage` in that case. For a REST contract, use the
-matching path such as `${project.build.directory}/dependency-specs/session-api-1.0.0-jar/openapi/session.yml` as the
-OpenAPI Generator input. Plugin identity and shared defaults remain centralised here; generated package, output, and
-AsyncAPI role remain consumer-specific.
+`role=client` generates a consumer instead — use `consumerApiPackage` in that case. For a REST contract, OpenAPI
+modules version their URL path prefix as a folder under `openapi/` (`v1/`, `v2/`, ...) — use the matching
+version-qualified path such as
+`${project.build.directory}/dependency-specs/session-api-2.0.0-jar/openapi/v1/session.yml` as the OpenAPI Generator
+input, and give that execution's `apiPackage`/`modelPackage` a matching `.v1` suffix so generating more than one
+version of the same contract doesn't collide. Plugin identity and shared defaults remain centralised here;
+generated package, output, and AsyncAPI role remain consumer-specific.
 
 ## IDE Setup (IntelliJ)
 
