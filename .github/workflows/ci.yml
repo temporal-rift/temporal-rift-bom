@@ -22,6 +22,7 @@ jobs:
           java-version: 26
           java-distribution: temurin
           maven-version: 3.9.13
+          settings-githubServer: false
 
       - name: Format and Checkstyle
         run: mvn --batch-mode -f pom.xml validate
@@ -55,6 +56,7 @@ jobs:
           java-version: 26
           java-distribution: temurin
           maven-version: 3.9.13
+          settings-githubServer: false
 
       - name: Build, test and analyze
         env:
