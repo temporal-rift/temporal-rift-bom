@@ -28,8 +28,8 @@ jobs:
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: ~/.m2
-          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-          restore-keys: ${{ runner.os }}-m2
+          key: ${{ runner.os }}-m2-format-check-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2-format-check-
 
       - name: Format and Checkstyle
         run: mvn --batch-mode -f asyncapi-codegen-maven-plugin/pom.xml validate
@@ -76,8 +76,8 @@ jobs:
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: ~/.m2
-          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-          restore-keys: ${{ runner.os }}-m2
+          key: ${{ runner.os }}-m2-build-test-analyze-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2-build-test-analyze-
 
       - name: Build, test and analyze
         env:
