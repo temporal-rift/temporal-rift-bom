@@ -25,27 +25,23 @@ class JavaContractGeneratorTest {
                         document, "io.github.temporalrift.asyncapi.actionevents", "GeneratedChannelContract")
                 .generate(channel);
 
-        assertThat(source).contains("public static final String CHANNEL = \"game.events\";");
-        assertThat(source).contains("public static final String OUTPUT_BINDING = \"game-events-out\";");
-
-        // schema-derived fields, not a raw json blob
-        assertThat(source).contains("public record CardPlayedPayload(");
-        assertThat(source).contains("UUID gameId");
-        assertThat(source).contains("int eraNumber");
-
-        // nested $ref'd object schema becomes its own record
-        assertThat(source).contains("public record ActionSummary(");
-
-        // nested $ref'd string-enum schema becomes a real Java enum, not a plain String
-        assertThat(source).contains("public enum CardType {");
-        assertThat(source).contains("public enum Faction {");
-
-        // array of $ref'd objects becomes List<Type>
-        assertThat(source).contains("List<ActionSummary>");
-
-        // eventType dispatch
-        assertThat(source).contains("CARD_PLAYED_EVENT_TYPE = \"CardPlayed\"");
-        assertThat(source).contains("case CARD_PLAYED_EVENT_TYPE -> onCardPlayed(");
+        assertThat(source)
+                .contains("public static final String CHANNEL = \"game.events\";")
+                .contains("public static final String OUTPUT_BINDING = \"game-events-out\";")
+                // schema-derived fields, not a raw json blob
+                .contains("public record CardPlayedPayload(")
+                .contains("UUID gameId")
+                .contains("int eraNumber")
+                // nested $ref'd object schema becomes its own record
+                .contains("public record ActionSummary(")
+                // nested $ref'd string-enum schema becomes a real Java enum, not a plain String
+                .contains("public enum CardType {")
+                .contains("public enum Faction {")
+                // array of $ref'd objects becomes List<Type>
+                .contains("List<ActionSummary>")
+                // eventType dispatch
+                .contains("CARD_PLAYED_EVENT_TYPE = \"CardPlayed\"")
+                .contains("case CARD_PLAYED_EVENT_TYPE -> onCardPlayed(");
 
         compileOrFail(source, "actionevents", "GeneratedChannelContract");
     }
@@ -56,8 +52,9 @@ class JavaContractGeneratorTest {
         String source = new JavaContractGenerator(
                         document, "io.github.temporalrift.asyncapi.sessionevents", "GeneratedChannelContract")
                 .generate(onlyChannel(document));
-        assertThat(source).contains("public record EventsDrawnFutureEvent(");
-        assertThat(source).contains("public record GameEndedPlayerScoreResult(");
+        assertThat(source)
+                .contains("public record EventsDrawnFutureEvent(")
+                .contains("public record GameEndedPlayerScoreResult(");
         compileOrFail(source, "sessionevents", "GeneratedChannelContract");
     }
 
@@ -77,15 +74,14 @@ class JavaContractGeneratorTest {
         String source = new JavaContractGenerator(
                         document, "io.github.temporalrift.asyncapi.timelineevents", "GeneratedChannelContract")
                 .generate(onlyChannel(document));
-        assertThat(source).contains("public record EraResolutionCompletedPayload(");
-
-        // the array item type must resolve to the merged record, not fall through to Object
-        assertThat(source).contains("List<EraTerminalResolution> terminalResolutions");
-
-        // EraTerminalResolution has no properties of its own, only a oneOf of two branches - the generated record
-        // must merge both branches' fields rather than come out empty. winningOutcomeId is required in only one
-        // branch, so it must still be present in the merged record (as a nullable UUID, not dropped).
         assertThat(source)
+                .contains("public record EraResolutionCompletedPayload(")
+                // the array item type must resolve to the merged record, not fall through to Object
+                .contains("List<EraTerminalResolution> terminalResolutions")
+                // EraTerminalResolution has no properties of its own, only a oneOf of two branches - the generated
+                // record must merge both branches' fields rather than come out empty. winningOutcomeId is required
+                // in only one branch, so it must still be present in the merged record (as a nullable UUID, not
+                // dropped).
                 .contains("public record EraTerminalResolution(UUID eventId, int revealIndex, String terminalState, "
                         + "UUID winningOutcomeId)");
 
@@ -110,16 +106,18 @@ class JavaContractGeneratorTest {
                         document, "io.github.temporalrift.asyncapi.multichannel", "GeneratedTimelineEventsContract")
                 .generate(timelineEvents);
 
-        assertThat(gameSource).contains("public final class GeneratedGameEventsContract {");
-        assertThat(gameSource).contains("CHANNEL = \"game.events\"");
-        assertThat(gameSource).contains("publishLobbyCreated(");
-        // a message that belongs only to the other channel must not leak in here
-        assertThat(gameSource).doesNotContain("ResolutionStarted");
+        assertThat(gameSource)
+                .contains("public final class GeneratedGameEventsContract {")
+                .contains("CHANNEL = \"game.events\"")
+                .contains("publishLobbyCreated(")
+                // a message that belongs only to the other channel must not leak in here
+                .doesNotContain("ResolutionStarted");
 
-        assertThat(timelineSource).contains("public final class GeneratedTimelineEventsContract {");
-        assertThat(timelineSource).contains("CHANNEL = \"timeline.events\"");
-        assertThat(timelineSource).contains("publishResolutionStarted(");
-        assertThat(timelineSource).doesNotContain("LobbyCreated");
+        assertThat(timelineSource)
+                .contains("public final class GeneratedTimelineEventsContract {")
+                .contains("CHANNEL = \"timeline.events\"")
+                .contains("publishResolutionStarted(")
+                .doesNotContain("LobbyCreated");
 
         compileOrFail(gameSource, "multichannel", "GeneratedGameEventsContract");
         compileOrFail(timelineSource, "multichannel", "GeneratedTimelineEventsContract");
@@ -132,8 +130,7 @@ class JavaContractGeneratorTest {
                         document, "io.github.temporalrift.asyncapi.edgecases", "GeneratedChannelContract")
                 .generate(onlyChannel(document));
 
-        assertThat(source).contains("String classValue");
-        assertThat(source).contains("int defaultValue");
+        assertThat(source).contains("String classValue").contains("int defaultValue");
 
         compileOrFail(source, "edgecases", "GeneratedChannelContract");
     }
@@ -143,9 +140,9 @@ class JavaContractGeneratorTest {
         AsyncApiDocument document = AsyncApiDocument.parse(fixture("name-collision/asyncapi.yml"));
         AsyncApiDocument.Channel channel = onlyChannel(document);
 
-        assertThatThrownBy(() -> new JavaContractGenerator(
-                                document, "io.github.temporalrift.asyncapi.namecollision", "GeneratedChannelContract")
-                        .generate(channel))
+        var generator = new JavaContractGenerator(
+                document, "io.github.temporalrift.asyncapi.namecollision", "GeneratedChannelContract");
+        assertThatThrownBy(() -> generator.generate(channel))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Metadata");
     }
@@ -164,9 +161,9 @@ class JavaContractGeneratorTest {
         AsyncApiDocument document = AsyncApiDocument.parse(fixture("invalid-enum/asyncapi.yml"));
         AsyncApiDocument.Channel channel = onlyChannel(document);
 
-        assertThatThrownBy(() -> new JavaContractGenerator(
-                                document, "io.github.temporalrift.asyncapi.invalidenum", "GeneratedChannelContract")
-                        .generate(channel))
+        var generator = new JavaContractGenerator(
+                document, "io.github.temporalrift.asyncapi.invalidenum", "GeneratedChannelContract");
+        assertThatThrownBy(() -> generator.generate(channel))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("in-progress");
     }
@@ -176,9 +173,9 @@ class JavaContractGeneratorTest {
         AsyncApiDocument.Channel blankAddressChannel = new AsyncApiDocument.Channel("gameEvents", "", List.of());
         AsyncApiDocument document = AsyncApiDocument.parse(fixture("edge-cases/asyncapi.yml"));
 
-        assertThatThrownBy(() -> new JavaContractGenerator(
-                                document, "io.github.temporalrift.asyncapi.blank", "GeneratedChannelContract")
-                        .generate(blankAddressChannel))
+        var generator = new JavaContractGenerator(
+                document, "io.github.temporalrift.asyncapi.blank", "GeneratedChannelContract");
+        assertThatThrownBy(() -> generator.generate(blankAddressChannel))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("no address");
     }
@@ -190,14 +187,15 @@ class JavaContractGeneratorTest {
                         document, "io.github.temporalrift.asyncapi.optionalfields", "GeneratedChannelContract")
                 .generate(onlyChannel(document));
 
-        assertThat(source).contains("int requiredCount");
-        assertThat(source).contains("Integer optionalCount");
-        assertThat(source).contains("long requiredTotal");
-        assertThat(source).contains("Long optionalTotal");
-        assertThat(source).contains("double requiredScore");
-        assertThat(source).contains("Double optionalScore");
-        assertThat(source).contains("boolean requiredFlag");
-        assertThat(source).contains("Boolean optionalFlag");
+        assertThat(source)
+                .contains("int requiredCount")
+                .contains("Integer optionalCount")
+                .contains("long requiredTotal")
+                .contains("Long optionalTotal")
+                .contains("double requiredScore")
+                .contains("Double optionalScore")
+                .contains("boolean requiredFlag")
+                .contains("Boolean optionalFlag");
 
         compileOrFail(source, "optionalfields", "GeneratedChannelContract");
     }
@@ -209,10 +207,12 @@ class JavaContractGeneratorTest {
                         document, "io.github.temporalrift.asyncapi.refnamenormalization", "GeneratedChannelContract")
                 .generate(onlyChannel(document));
 
-        // "#/components/schemas/status-type" must not emit the raw, non-identifier fragment "status-type"
-        assertThat(source).contains("public enum StatusType {");
-        // "#/components/schemas/new" is both hyphen-free and a reserved word - the existing Value-suffix path applies
-        assertThat(source).contains("public record NewValue(");
+        assertThat(source)
+                // "#/components/schemas/status-type" must not emit the raw, non-identifier fragment "status-type"
+                .contains("public enum StatusType {")
+                // "#/components/schemas/new" is both hyphen-free and a reserved word - the existing Value-suffix
+                // path applies
+                .contains("public record NewValue(");
 
         compileOrFail(source, "refnamenormalization", "GeneratedChannelContract");
     }
@@ -226,8 +226,7 @@ class JavaContractGeneratorTest {
 
         // FooPayload comes from shared/payload.yaml; its "status" property is "./enums.yaml#/Status", relative to
         // shared/payload.yaml (-> shared/enums.yaml), not relative to the entry asyncapi.yml's own directory.
-        assertThat(source).contains("public enum Status { ACTIVE, INACTIVE }");
-        assertThat(source).contains("Status status");
+        assertThat(source).contains("public enum Status { ACTIVE, INACTIVE }").contains("Status status");
 
         compileOrFail(source, "crossfileref", "GeneratedChannelContract");
     }
@@ -237,11 +236,9 @@ class JavaContractGeneratorTest {
         AsyncApiDocument document = AsyncApiDocument.parse(fixture("event-type-collision/asyncapi.yml"));
         AsyncApiDocument.Channel channel = onlyChannel(document);
 
-        assertThatThrownBy(() -> new JavaContractGenerator(
-                                document,
-                                "io.github.temporalrift.asyncapi.eventtypecollision",
-                                "GeneratedChannelContract")
-                        .generate(channel))
+        var generator = new JavaContractGenerator(
+                document, "io.github.temporalrift.asyncapi.eventtypecollision", "GeneratedChannelContract");
+        assertThatThrownBy(() -> generator.generate(channel))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("AB")
                 .hasMessageContaining("aB")
@@ -255,11 +252,9 @@ class JavaContractGeneratorTest {
 
         // message "Foo" generates "FooPayload"; its own payload has an inline "fooPayload" object property that
         // normalizes to the same name - the fixed-name reservation must catch this, not silently let it collide.
-        assertThatThrownBy(() -> new JavaContractGenerator(
-                                document,
-                                "io.github.temporalrift.asyncapi.fixednamecollision",
-                                "GeneratedChannelContract")
-                        .generate(channel))
+        var generator = new JavaContractGenerator(
+                document, "io.github.temporalrift.asyncapi.fixednamecollision", "GeneratedChannelContract");
+        assertThatThrownBy(() -> generator.generate(channel))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("FooPayload");
     }
@@ -269,11 +264,9 @@ class JavaContractGeneratorTest {
         AsyncApiDocument document = AsyncApiDocument.parse(fixture("qualified-enum-value/asyncapi.yml"));
         AsyncApiDocument.Channel channel = onlyChannel(document);
 
-        assertThatThrownBy(() -> new JavaContractGenerator(
-                                document,
-                                "io.github.temporalrift.asyncapi.qualifiedenumvalue",
-                                "GeneratedChannelContract")
-                        .generate(channel))
+        var generator = new JavaContractGenerator(
+                document, "io.github.temporalrift.asyncapi.qualifiedenumvalue", "GeneratedChannelContract");
+        assertThatThrownBy(() -> generator.generate(channel))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("FOO.BAR");
     }
@@ -283,11 +276,9 @@ class JavaContractGeneratorTest {
         AsyncApiDocument document = AsyncApiDocument.parse(fixture("duplicate-enum-value/asyncapi.yml"));
         AsyncApiDocument.Channel channel = onlyChannel(document);
 
-        assertThatThrownBy(() -> new JavaContractGenerator(
-                                document,
-                                "io.github.temporalrift.asyncapi.duplicateenumvalue",
-                                "GeneratedChannelContract")
-                        .generate(channel))
+        var generator = new JavaContractGenerator(
+                document, "io.github.temporalrift.asyncapi.duplicateenumvalue", "GeneratedChannelContract");
+        assertThatThrownBy(() -> generator.generate(channel))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("ACTIVE")
                 .hasMessageContaining("more than once");
@@ -301,9 +292,10 @@ class JavaContractGeneratorTest {
                 .generate(onlyChannel(document));
 
         // message name "thingHappened" must still produce a capitalized record/method name, not "thingHappenedPayload"
-        assertThat(source).contains("public record ThingHappenedPayload(");
-        assertThat(source).contains("publishThingHappened(");
-        assertThat(source).contains("onThingHappened(");
+        assertThat(source)
+                .contains("public record ThingHappenedPayload(")
+                .contains("publishThingHappened(")
+                .contains("onThingHappened(");
 
         compileOrFail(source, "lowercasemessagename", "GeneratedChannelContract");
     }
@@ -314,11 +306,9 @@ class JavaContractGeneratorTest {
         AsyncApiDocument.Channel channel = onlyChannel(document);
 
         // an inline "generatedChannelContract" property normalizes to the same name as the enclosing class itself
-        assertThatThrownBy(() -> new JavaContractGenerator(
-                                document,
-                                "io.github.temporalrift.asyncapi.classnamecollision",
-                                "GeneratedChannelContract")
-                        .generate(channel))
+        var generator = new JavaContractGenerator(
+                document, "io.github.temporalrift.asyncapi.classnamecollision", "GeneratedChannelContract");
+        assertThatThrownBy(() -> generator.generate(channel))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("GeneratedChannelContract");
     }
@@ -328,11 +318,9 @@ class JavaContractGeneratorTest {
         AsyncApiDocument document = AsyncApiDocument.parse(fixture("unsupported-schema-shape/asyncapi.yml"));
         AsyncApiDocument.Channel channel = onlyChannel(document);
 
-        assertThatThrownBy(() -> new JavaContractGenerator(
-                                document,
-                                "io.github.temporalrift.asyncapi.unsupportedschemashape",
-                                "GeneratedChannelContract")
-                        .generate(channel))
+        var generator = new JavaContractGenerator(
+                document, "io.github.temporalrift.asyncapi.unsupportedschemashape", "GeneratedChannelContract");
+        assertThatThrownBy(() -> generator.generate(channel))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("properties")
                 .hasMessageContaining("oneOf");
