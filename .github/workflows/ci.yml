@@ -25,7 +25,7 @@ jobs:
           settings-githubServer: false
 
       - name: Format and Checkstyle
-        run: mvn --batch-mode -f pom.xml validate
+        run: mvn --batch-mode -f asyncapi-codegen-maven-plugin/pom.xml validate
 
   security-snyk:
     runs-on: ubuntu-latest
@@ -61,9 +61,16 @@ jobs:
       - name: Build, test and analyze
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_PR_KEY: ${{ github.event.pull_request.number }}
+          SONAR_PR_BRANCH: ${{ github.head_ref }}
+          SONAR_PR_BASE: ${{ github.base_ref }}
         run: |
-          SONAR_ARGS=""
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            SONAR_ARGS="-Dsonar.pullrequest.key=${{ github.event.pull_request.number }} -Dsonar.pullrequest.branch=${{ github.head_ref }} -Dsonar.pullrequest.base=${{ github.base_ref }}"
+          SONAR_ARGS=()
+          if [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
+            SONAR_ARGS=(
+              "-Dsonar.pullrequest.key=$SONAR_PR_KEY"
+              "-Dsonar.pullrequest.branch=$SONAR_PR_BRANCH"
+              "-Dsonar.pullrequest.base=$SONAR_PR_BASE"
+            )
           fi
-          mvn --batch-mode -f asyncapi-codegen-maven-plugin/pom.xml verify sonar:sonar $SONAR_ARGS
+          mvn --batch-mode -f asyncapi-codegen-maven-plugin/pom.xml verify sonar:sonar "${SONAR_ARGS[@]}"
