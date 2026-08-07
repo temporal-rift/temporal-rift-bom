@@ -9,11 +9,15 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.stream.Stream;
 import javax.tools.JavaCompiler;
 import javax.tools.StandardJavaFileManager;
 import javax.tools.ToolProvider;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 class JavaContractGeneratorTest {
 
@@ -135,16 +139,45 @@ class JavaContractGeneratorTest {
         compileOrFail(source, "edgecases", "GeneratedChannelContract");
     }
 
-    @Test
-    void rejectsTwoDifferentSchemasGeneratingTheSameNestedTypeName() throws IOException, URISyntaxException {
-        AsyncApiDocument document = AsyncApiDocument.parse(fixture("name-collision/asyncapi.yml"));
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("singleMessageRejectionCases")
+    void rejectsInvalidSchemas(String testName, String fixtureDir, String packageSuffix, String expectedMessage)
+            throws IOException, URISyntaxException {
+        AsyncApiDocument document = AsyncApiDocument.parse(fixture(fixtureDir + "/asyncapi.yml"));
         AsyncApiDocument.Channel channel = onlyChannel(document);
 
         var generator = new JavaContractGenerator(
-                document, "io.github.temporalrift.asyncapi.namecollision", "GeneratedChannelContract");
+                document, "io.github.temporalrift.asyncapi." + packageSuffix, "GeneratedChannelContract");
         assertThatThrownBy(() -> generator.generate(channel))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Metadata");
+                .hasMessageContaining(expectedMessage);
+    }
+
+    private static Stream<Arguments> singleMessageRejectionCases() {
+        return Stream.of(
+                Arguments.of(
+                        "rejectsTwoDifferentSchemasGeneratingTheSameNestedTypeName",
+                        "name-collision",
+                        "namecollision",
+                        "Metadata"),
+                Arguments.of(
+                        "rejectsEnumValuesThatArentValidJavaIdentifiers", "invalid-enum", "invalidenum", "in-progress"),
+                // message "Foo" generates "FooPayload"; its own payload has an inline "fooPayload" object property
+                // that normalizes to the same name - the fixed-name reservation must catch this, not silently let
+                // it collide.
+                Arguments.of(
+                        "rejectsAnInlineSchemaCollidingWithAGeneratedPayloadRecordName",
+                        "fixed-name-collision",
+                        "fixednamecollision",
+                        "FooPayload"),
+                Arguments.of("rejectsQualifiedEnumValues", "qualified-enum-value", "qualifiedenumvalue", "FOO.BAR"),
+                // an inline "generatedChannelContract" property normalizes to the same name as the enclosing class
+                // itself
+                Arguments.of(
+                        "rejectsANestedSchemaCollidingWithTheEnclosingClassName",
+                        "class-name-collision",
+                        "classnamecollision",
+                        "GeneratedChannelContract"));
     }
 
     @Test
@@ -154,18 +187,6 @@ class JavaContractGeneratorTest {
         assertThatThrownBy(document::channels)
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("circular");
-    }
-
-    @Test
-    void rejectsEnumValuesThatArentValidJavaIdentifiers() throws IOException, URISyntaxException {
-        AsyncApiDocument document = AsyncApiDocument.parse(fixture("invalid-enum/asyncapi.yml"));
-        AsyncApiDocument.Channel channel = onlyChannel(document);
-
-        var generator = new JavaContractGenerator(
-                document, "io.github.temporalrift.asyncapi.invalidenum", "GeneratedChannelContract");
-        assertThatThrownBy(() -> generator.generate(channel))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("in-progress");
     }
 
     @Test
@@ -246,32 +267,6 @@ class JavaContractGeneratorTest {
     }
 
     @Test
-    void rejectsAnInlineSchemaCollidingWithAGeneratedPayloadRecordName() throws IOException, URISyntaxException {
-        AsyncApiDocument document = AsyncApiDocument.parse(fixture("fixed-name-collision/asyncapi.yml"));
-        AsyncApiDocument.Channel channel = onlyChannel(document);
-
-        // message "Foo" generates "FooPayload"; its own payload has an inline "fooPayload" object property that
-        // normalizes to the same name - the fixed-name reservation must catch this, not silently let it collide.
-        var generator = new JavaContractGenerator(
-                document, "io.github.temporalrift.asyncapi.fixednamecollision", "GeneratedChannelContract");
-        assertThatThrownBy(() -> generator.generate(channel))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("FooPayload");
-    }
-
-    @Test
-    void rejectsQualifiedEnumValues() throws IOException, URISyntaxException {
-        AsyncApiDocument document = AsyncApiDocument.parse(fixture("qualified-enum-value/asyncapi.yml"));
-        AsyncApiDocument.Channel channel = onlyChannel(document);
-
-        var generator = new JavaContractGenerator(
-                document, "io.github.temporalrift.asyncapi.qualifiedenumvalue", "GeneratedChannelContract");
-        assertThatThrownBy(() -> generator.generate(channel))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("FOO.BAR");
-    }
-
-    @Test
     void rejectsDuplicateEnumValues() throws IOException, URISyntaxException {
         AsyncApiDocument document = AsyncApiDocument.parse(fixture("duplicate-enum-value/asyncapi.yml"));
         AsyncApiDocument.Channel channel = onlyChannel(document);
@@ -298,19 +293,6 @@ class JavaContractGeneratorTest {
                 .contains("onThingHappened(");
 
         compileOrFail(source, "lowercasemessagename", "GeneratedChannelContract");
-    }
-
-    @Test
-    void rejectsANestedSchemaCollidingWithTheEnclosingClassName() throws IOException, URISyntaxException {
-        AsyncApiDocument document = AsyncApiDocument.parse(fixture("class-name-collision/asyncapi.yml"));
-        AsyncApiDocument.Channel channel = onlyChannel(document);
-
-        // an inline "generatedChannelContract" property normalizes to the same name as the enclosing class itself
-        var generator = new JavaContractGenerator(
-                document, "io.github.temporalrift.asyncapi.classnamecollision", "GeneratedChannelContract");
-        assertThatThrownBy(() -> generator.generate(channel))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("GeneratedChannelContract");
     }
 
     @Test
