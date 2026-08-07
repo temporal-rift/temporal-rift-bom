@@ -448,7 +448,11 @@ final class JavaContractGenerator {
 
     private String registerRecord(String name, JsonNode schema, Path specFile) {
         claimName(name, schema);
-        if (!nestedTypeSources.containsKey(name)) {
+        // Not computeIfAbsent: recordFields() can recurse back into registerRecord() for nested object
+        // fields, which would re-enter the mapping function for the same map -- the PLACEHOLDER put below
+        // is what breaks that recursion (self-referential schemas), so the map must already contain the
+        // key before the recursive call happens.
+        if (!nestedTypeSources.containsKey(name)) { // NOSONAR java:S3824
             nestedTypeSources.put(name, "PLACEHOLDER");
             String fields = recordFields(schema, specFile);
             nestedTypeSources.put(name, "    public record " + name + "(" + fields + ") {}");
