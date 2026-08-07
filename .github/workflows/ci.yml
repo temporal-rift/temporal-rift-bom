@@ -41,11 +41,6 @@ jobs:
         with:
           persist-credentials: false
 
-      # snyk/actions/maven's own action.yml hardcodes `image: docker://snyk/snyk:maven` (a mutable tag) --
-      # not something this workflow can override. Left unpinned deliberately: Snyk's vulnerability
-      # database needs continuous updates to catch newly-disclosed CVEs, so pinning the scanner image to a
-      # digest would freeze it at that snapshot's data, defeating the point of running the scan at all --
-      # unlike checkout/setup-maven-action, whose code doesn't need to change to stay useful.
       - name: Snyk scan
         uses: snyk/actions/maven@12140f4059e244892ae643824a95459a102120dd # master
         env:
