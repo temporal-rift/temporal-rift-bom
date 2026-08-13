@@ -193,6 +193,9 @@ final class JavaContractGenerator {
                 import java.util.List;
                 import java.util.UUID;
 
+                import com.fasterxml.jackson.annotation.JsonCreator;
+                import com.fasterxml.jackson.annotation.JsonProperty;
+
                 /** Generated from the AsyncAPI 3 channel and message contract. */
                 public final class %s {
 
@@ -279,6 +282,13 @@ final class JavaContractGenerator {
             }
             first = false;
             PropertyInfo info = entry.getValue();
+            // JSON Schema "required" means the property must be present, not that it must be non-null -- a
+            // required-but-nullable-typed property may still legitimately be sent as null. @JsonProperty(required
+            // = true) enforces exactly presence, for any field type (list, nested record, enum, primitive), not
+            // just the primitive-boxing distinction javaType() below separately makes.
+            if (info.required()) {
+                fields.append("@JsonProperty(required = true) ");
+            }
             fields.append(javaType(info.schema(), info.schemaFile(), propertyName, info.required()))
                     .append(' ')
                     .append(fieldName);
@@ -441,6 +451,11 @@ final class JavaContractGenerator {
                     throw new IllegalStateException("Enum value \"" + constant + "\" in schema \"" + name
                             + "\" is not a valid Java identifier");
                 }
+                if (UNKNOWN_ENUM_CONSTANT.equals(constant)) {
+                    throw new IllegalStateException("Enum value \"" + UNKNOWN_ENUM_CONSTANT + "\" in schema \""
+                            + name + "\" collides with the generator's reserved fallback constant for "
+                            + ENUM_UNKNOWN_VALUE_POLICY + " unrecognized-value handling");
+                }
                 if (!seenConstants.add(constant)) {
                     throw new IllegalStateException(
                             "Enum value \"" + constant + "\" in schema \"" + name + "\" is declared more than once");
@@ -451,9 +466,54 @@ final class JavaContractGenerator {
                 first = false;
                 constants.append(constant);
             }
-            nestedTypeSources.put(name, "    public enum " + name + " { " + constants + " }");
+            nestedTypeSources.put(name, generateEnumSource(name, constants.toString()));
         }
         return name;
+    }
+
+    /**
+     * How a generated enum handles a wire value absent from the schema's declared set. {@code TOLERANT} adds an
+     * {@code UNKNOWN} constant and a {@code @JsonCreator} factory that falls back to it, so a producer introducing
+     * a new value doesn't break older consumers still running the previous contract version. {@code STRICT} would
+     * reject an undeclared value as malformed input instead -- appropriate for an enum whose value set is meant to
+     * be closed, never extended without a coordinated consumer upgrade. Every current wire enum in this project
+     * needs TOLERANT; STRICT exists here to make that a visible policy choice rather than an unstated default, and
+     * is ready for per-schema selection once a real closed-enum need exists -- not before.
+     */
+    private enum EnumUnknownValuePolicy {
+        TOLERANT,
+        STRICT
+    }
+
+    private static final EnumUnknownValuePolicy ENUM_UNKNOWN_VALUE_POLICY = EnumUnknownValuePolicy.TOLERANT;
+    private static final String UNKNOWN_ENUM_CONSTANT = "UNKNOWN";
+
+    private static String generateEnumSource(String name, String declaredConstants) {
+        if (ENUM_UNKNOWN_VALUE_POLICY == EnumUnknownValuePolicy.STRICT) {
+            return "    public enum " + name + " { " + declaredConstants + " }";
+        }
+        return """
+                    public enum %s {
+                        %s, %s;
+
+                        /** An unrecognized wire value normalizes to {@link #%s} rather than failing deserialization. */
+                        @JsonCreator
+                        public static %s fromWireValue(String value) {
+                            for (%s constant : values()) {
+                                if (constant.name().equals(value)) {
+                                    return constant;
+                                }
+                            }
+                            return %s;
+                        }
+                    }""".formatted(
+                        name,
+                        declaredConstants,
+                        UNKNOWN_ENUM_CONSTANT,
+                        UNKNOWN_ENUM_CONSTANT,
+                        name,
+                        name,
+                        UNKNOWN_ENUM_CONSTANT);
     }
 
     private String registerRecord(String name, JsonNode schema, Path specFile) {
