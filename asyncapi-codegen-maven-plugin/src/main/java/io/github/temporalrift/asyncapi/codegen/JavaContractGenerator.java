@@ -231,6 +231,9 @@ final class JavaContractGenerator {
                                 Object rawPayload,
                                 EventHeaders headers,
                                 PayloadDeserializer deserializer) {
+                            if (eventType == null) {
+                                return false;
+                            }
                             return switch (eventType) {
                 %s            default -> false;
                             };
