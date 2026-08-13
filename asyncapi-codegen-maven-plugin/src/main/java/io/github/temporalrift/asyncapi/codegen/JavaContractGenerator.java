@@ -166,11 +166,11 @@ final class JavaContractGenerator {
                     .append(name)
                     .append("Payload payload, EventHeaders headers);\n");
             consumerMethods
-                    .append("        void on")
+                    .append("        default void on")
                     .append(name)
                     .append('(')
                     .append(name)
-                    .append("Payload payload, EventHeaders headers);\n");
+                    .append("Payload payload, EventHeaders headers) {}\n");
             dispatchCases
                     .append("            case ")
                     .append(eventTypeConstant)
