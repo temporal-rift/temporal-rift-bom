@@ -49,6 +49,7 @@ class JavaContractGeneratorTest {
                 .contains("onCardPlayed(deserializer.deserialize(rawPayload, CardPlayedPayload.class), headers);")
                 .contains("yield true;")
                 .contains("default boolean dispatch(")
+                .contains("if (eventType == null) {")
                 .contains("return switch (eventType) {");
 
         compileOrFail(source, "actionevents", "GeneratedChannelContract");
