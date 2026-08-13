@@ -9,7 +9,7 @@
          the same reason build-tools is standalone. Must be built and published before the BOM. -->
     <groupId>io.github.temporal-rift</groupId>
     <artifactId>asyncapi-codegen-maven-plugin</artifactId>
-    <version>0.1.1</version>
+    <version>0.2.0</version>
     <packaging>maven-plugin</packaging>
 
     <name>Temporal Rift AsyncAPI Codegen Maven Plugin</name>

@@ -45,7 +45,11 @@ class JavaContractGeneratorTest {
                 .contains("List<ActionSummary>")
                 // eventType dispatch
                 .contains("CARD_PLAYED_EVENT_TYPE = \"CardPlayed\"")
-                .contains("case CARD_PLAYED_EVENT_TYPE -> onCardPlayed(");
+                .contains("case CARD_PLAYED_EVENT_TYPE -> {")
+                .contains("onCardPlayed(deserializer.deserialize(rawPayload, CardPlayedPayload.class), headers);")
+                .contains("yield true;")
+                .contains("default boolean dispatch(")
+                .contains("return switch (eventType) {");
 
         compileOrFail(source, "actionevents", "GeneratedChannelContract");
     }
