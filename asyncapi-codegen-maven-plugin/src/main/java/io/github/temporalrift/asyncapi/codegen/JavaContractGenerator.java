@@ -440,35 +440,38 @@ final class JavaContractGenerator {
         claimName(name, schema);
         if (!nestedTypeSources.containsKey(name)) {
             Set<String> seenConstants = new LinkedHashSet<>();
-            StringBuilder constants = new StringBuilder();
-            boolean first = true;
+            List<String> constants = new ArrayList<>();
             for (JsonNode value : schema.path("enum")) {
                 String constant = value.asText();
-                // isIdentifier() accepts reserved keywords too (they're lexically valid identifiers), so keywords
-                // must be rejected separately; isName() would also reject qualified (dotted) names like "FOO.BAR"
-                // outright, but that error message is less specific about what's actually wrong.
-                if (!SourceVersion.isIdentifier(constant) || RESERVED_WORDS.contains(constant)) {
-                    throw new IllegalStateException("Enum value \"" + constant + "\" in schema \"" + name
-                            + "\" is not a valid Java identifier");
-                }
-                if (UNKNOWN_ENUM_CONSTANT.equals(constant)) {
-                    throw new IllegalStateException("Enum value \"" + UNKNOWN_ENUM_CONSTANT + "\" in schema \""
-                            + name + "\" collides with the generator's reserved fallback constant for "
-                            + ENUM_UNKNOWN_VALUE_POLICY + " unrecognized-value handling");
-                }
-                if (!seenConstants.add(constant)) {
-                    throw new IllegalStateException(
-                            "Enum value \"" + constant + "\" in schema \"" + name + "\" is declared more than once");
-                }
-                if (!first) {
-                    constants.append(", ");
-                }
-                first = false;
-                constants.append(constant);
+                validateEnumConstant(name, constant, seenConstants);
+                constants.add(constant);
             }
-            nestedTypeSources.put(name, generateEnumSource(name, constants.toString()));
+            nestedTypeSources.put(name, generateEnumSource(name, String.join(", ", constants)));
         }
         return name;
+    }
+
+    /**
+     * Rejects an enum value that isn't a usable Java identifier, collides with the reserved fallback name, or
+     * repeats.
+     */
+    private void validateEnumConstant(String enumName, String constant, Set<String> seenConstants) {
+        // isIdentifier() accepts reserved keywords too (they're lexically valid identifiers), so keywords must be
+        // rejected separately; isName() would also reject qualified (dotted) names like "FOO.BAR" outright, but
+        // that error message is less specific about what's actually wrong.
+        if (!SourceVersion.isIdentifier(constant) || RESERVED_WORDS.contains(constant)) {
+            throw new IllegalStateException(
+                    "Enum value \"" + constant + "\" in schema \"" + enumName + "\" is not a valid Java identifier");
+        }
+        if (UNKNOWN_ENUM_CONSTANT.equals(constant)) {
+            throw new IllegalStateException("Enum value \"" + UNKNOWN_ENUM_CONSTANT + "\" in schema \"" + enumName
+                    + "\" collides with the generator's reserved fallback constant for " + ENUM_UNKNOWN_VALUE_POLICY
+                    + " unrecognized-value handling");
+        }
+        if (!seenConstants.add(constant)) {
+            throw new IllegalStateException(
+                    "Enum value \"" + constant + "\" in schema \"" + enumName + "\" is declared more than once");
+        }
     }
 
     /**
