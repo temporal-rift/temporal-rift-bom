@@ -16,7 +16,9 @@ import com.fasterxml.jackson.databind.node.MissingNode;
 /**
  * Generates a single Java contract source for one AsyncAPI channel: payload records (fields derived from each
  * message's JSON Schema payload), an {@code EVENT_TYPE} constant per message, {@code Producer}/{@code Consumer}
- * interfaces, and a {@code Consumer.dispatch} method routing a raw record to its typed handler by {@code eventType}.
+ * interfaces, and a {@code Consumer.dispatch} method routing a raw record to its typed handler by {@code eventType},
+ * returning whether this contract recognized the type -- composable when multiple generated {@code Consumer}s
+ * share one Kafka subscription.
  */
 final class JavaContractGenerator {
 
@@ -172,11 +174,11 @@ final class JavaContractGenerator {
             dispatchCases
                     .append("            case ")
                     .append(eventTypeConstant)
-                    .append(" -> on")
+                    .append(" -> {\n                    on")
                     .append(name)
                     .append("(deserializer.deserialize(rawPayload, ")
                     .append(name)
-                    .append("Payload.class), headers);\n");
+                    .append("Payload.class), headers);\n                    yield true;\n                }\n");
         }
 
         StringBuilder nestedTypesSource = new StringBuilder();
@@ -219,14 +221,19 @@ final class JavaContractGenerator {
 
                     public interface Consumer {
                 %s
-                        default void dispatch(
+                        /**
+                         * Returns {@code true} if {@code eventType} was recognized and dispatched to its handler,
+                         * {@code false} if this contract does not recognize it -- composable across multiple
+                         * generated {@code Consumer}s sharing one Kafka subscription, each trying the next.
+                         */
+                        default boolean dispatch(
                                 String eventType,
                                 Object rawPayload,
                                 EventHeaders headers,
                                 PayloadDeserializer deserializer) {
-                            switch (eventType) {
-                %s            default -> throw new IllegalArgumentException("Unknown eventType: " + eventType);
-                            }
+                            return switch (eventType) {
+                %s            default -> false;
+                            };
                         }
                     }
                 }
