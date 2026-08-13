@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -18,6 +19,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.exc.MismatchedInputException;
 
 class JavaContractGeneratorTest {
 
@@ -91,8 +94,9 @@ class JavaContractGeneratorTest {
                 // record must merge both branches' fields rather than come out empty. winningOutcomeId is required
                 // in only one branch, so it must still be present in the merged record (as a nullable UUID, not
                 // dropped).
-                .contains("public record EraTerminalResolution(UUID eventId, int revealIndex, String terminalState, "
-                        + "UUID winningOutcomeId)");
+                .contains("public record EraTerminalResolution(@JsonProperty(required = true) UUID eventId, "
+                        + "@JsonProperty(required = true) int revealIndex, "
+                        + "@JsonProperty(required = true) String terminalState, UUID winningOutcomeId)");
 
         compileOrFail(source, "timelineevents", "GeneratedChannelContract");
     }
@@ -252,7 +256,11 @@ class JavaContractGeneratorTest {
 
         // FooPayload comes from shared/payload.yaml; its "status" property is "./enums.yaml#/Status", relative to
         // shared/payload.yaml (-> shared/enums.yaml), not relative to the entry asyncapi.yml's own directory.
-        assertThat(source).contains("public enum Status { ACTIVE, INACTIVE }").contains("Status status");
+        assertThat(source)
+                .contains("public enum Status {")
+                .contains("ACTIVE, INACTIVE, UNKNOWN;")
+                .contains("public static Status fromWireValue(String value) {")
+                .contains("Status status");
 
         compileOrFail(source, "crossfileref", "GeneratedChannelContract");
     }
@@ -323,6 +331,90 @@ class JavaContractGeneratorTest {
         URL resource = JavaContractGeneratorTest.class.getClassLoader().getResource("fixtures/" + relativePath);
         assertThat(resource).as("fixture " + relativePath).isNotNull();
         return Path.of(resource.toURI());
+    }
+
+    /**
+     * Behavioural, not source-string, verification: compiles and loads the generated record, then deserializes
+     * real JSON through {@code tools.jackson.databind} (the same major version the consuming services run) to
+     * confirm required-field and tolerant-enum semantics actually hold at runtime, not just that the expected
+     * annotations appear in the generated source.
+     */
+    @Test
+    void requiredReferenceFieldsRejectAbsenceButAllowNull_unknownEnumValueNormalizesToUnknown()
+            throws IOException, URISyntaxException, ReflectiveOperationException {
+        AsyncApiDocument document = AsyncApiDocument.parse(fixture("required-reference-fields/asyncapi.yml"));
+        String source = new JavaContractGenerator(
+                        document, "io.github.temporalrift.asyncapi.requiredfields", "GeneratedChannelContract")
+                .generate(onlyChannel(document));
+
+        Class<?> contract = compileAndLoad(source, "requiredfields", "GeneratedChannelContract");
+        Class<?> payloadType =
+                Class.forName(contract.getName() + "$ThingHappenedPayload", true, contract.getClassLoader());
+        Class<?> statusType = Class.forName(contract.getName() + "$Status", true, contract.getClassLoader());
+        ObjectMapper mapper = new ObjectMapper();
+
+        String gameId = "\"gameId\":\"3fa85f64-5717-4562-b3fc-2c963f66afa6\"";
+        String requiredIds = "\"requiredIds\":[]";
+        String requiredThing = "\"requiredThing\":{\"value\":\"x\"}";
+        String status = "\"status\":\"ACTIVE\"";
+
+        // Every required field present -> succeeds.
+        mapper.readValue("{%s,%s,%s,%s}".formatted(gameId, requiredIds, requiredThing, status), payloadType);
+
+        // A required list absent entirely -> rejected (missing means invalid, per JSON Schema "required").
+        assertThatThrownBy(() -> mapper.readValue("{%s,%s,%s}".formatted(gameId, requiredThing, status), payloadType))
+                .isInstanceOf(MismatchedInputException.class);
+
+        // A required list explicitly null -> allowed: JSON Schema "required" means present, not non-null.
+        Object withNullList = mapper.readValue(
+                "{%s,\"requiredIds\":null,%s,%s}".formatted(gameId, requiredThing, status), payloadType);
+        assertThat(payloadType.getMethod("requiredIds").invoke(withNullList)).isNull();
+
+        // A required nested object absent entirely -> rejected.
+        assertThatThrownBy(() -> mapper.readValue("{%s,%s,%s}".formatted(gameId, requiredIds, status), payloadType))
+                .isInstanceOf(MismatchedInputException.class);
+
+        // A required enum absent entirely -> rejected.
+        assertThatThrownBy(
+                        () -> mapper.readValue("{%s,%s,%s}".formatted(gameId, requiredIds, requiredThing), payloadType))
+                .isInstanceOf(MismatchedInputException.class);
+
+        // An enum value the schema never declared -> normalizes to UNKNOWN rather than failing deserialization.
+        Object withUnknownStatus = mapper.readValue(
+                "{%s,%s,%s,\"status\":\"SOMETHING_A_NEWER_PRODUCER_ADDED\"}"
+                        .formatted(gameId, requiredIds, requiredThing),
+                payloadType);
+        Object statusValue = payloadType.getMethod("status").invoke(withUnknownStatus);
+        Object unknownConstant = statusType.getMethod("valueOf", String.class).invoke(null, "UNKNOWN");
+        assertThat(statusValue).isEqualTo(unknownConstant);
+    }
+
+    private static Class<?> compileAndLoad(String source, String specPackage, String className)
+            throws IOException, ReflectiveOperationException {
+        Path tempDir = Files.createTempDirectory("asyncapi-codegen-test");
+        Path packageDir = tempDir.resolve("io/github/temporalrift/asyncapi/" + specPackage);
+        Files.createDirectories(packageDir);
+        Path sourceFile = packageDir.resolve(className + ".java");
+        Files.writeString(sourceFile, source);
+
+        JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+        Path outDir = Files.createDirectory(tempDir.resolve("out"));
+        try (StandardJavaFileManager fileManager = compiler.getStandardFileManager(null, null, null)) {
+            var task = compiler.getTask(
+                    null,
+                    fileManager,
+                    null,
+                    List.of("-d", outDir.toString()),
+                    null,
+                    fileManager.getJavaFileObjects(sourceFile));
+            assertThat(task.call())
+                    .as("generated source must compile:\n" + source)
+                    .isTrue();
+        }
+
+        URLClassLoader loader = new URLClassLoader(
+                new URL[] {outDir.toUri().toURL()}, JavaContractGeneratorTest.class.getClassLoader());
+        return Class.forName("io.github.temporalrift.asyncapi." + specPackage + "." + className, true, loader);
     }
 
     private static void compileOrFail(String source, String specPackage, String className) throws IOException {
