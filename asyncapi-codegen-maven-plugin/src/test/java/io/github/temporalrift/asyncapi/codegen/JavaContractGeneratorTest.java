@@ -362,7 +362,8 @@ class JavaContractGeneratorTest {
         mapper.readValue("{%s,%s,%s,%s}".formatted(gameId, requiredIds, requiredThing, status), payloadType);
 
         // A required list absent entirely -> rejected (missing means invalid, per JSON Schema "required").
-        assertThatThrownBy(() -> mapper.readValue("{%s,%s,%s}".formatted(gameId, requiredThing, status), payloadType))
+        String missingRequiredIds = "{%s,%s,%s}".formatted(gameId, requiredThing, status);
+        assertThatThrownBy(() -> mapper.readValue(missingRequiredIds, payloadType))
                 .isInstanceOf(MismatchedInputException.class);
 
         // A required list explicitly null -> allowed: JSON Schema "required" means present, not non-null.
@@ -371,12 +372,13 @@ class JavaContractGeneratorTest {
         assertThat(payloadType.getMethod("requiredIds").invoke(withNullList)).isNull();
 
         // A required nested object absent entirely -> rejected.
-        assertThatThrownBy(() -> mapper.readValue("{%s,%s,%s}".formatted(gameId, requiredIds, status), payloadType))
+        String missingRequiredThing = "{%s,%s,%s}".formatted(gameId, requiredIds, status);
+        assertThatThrownBy(() -> mapper.readValue(missingRequiredThing, payloadType))
                 .isInstanceOf(MismatchedInputException.class);
 
         // A required enum absent entirely -> rejected.
-        assertThatThrownBy(
-                        () -> mapper.readValue("{%s,%s,%s}".formatted(gameId, requiredIds, requiredThing), payloadType))
+        String missingStatus = "{%s,%s,%s}".formatted(gameId, requiredIds, requiredThing);
+        assertThatThrownBy(() -> mapper.readValue(missingStatus, payloadType))
                 .isInstanceOf(MismatchedInputException.class);
 
         // An enum value the schema never declared -> normalizes to UNKNOWN rather than failing deserialization.
