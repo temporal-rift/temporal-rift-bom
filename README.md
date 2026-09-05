@@ -31,21 +31,21 @@ publication to bridge a consumer to an unreleased BOM version.
 ```xml
 
 <parent>
-  <groupId>io.github.temporal-rift</groupId>
-  <artifactId>temporal-rift-bom</artifactId>
-  <version>1.7.0</version>
+    <groupId>io.github.temporal-rift</groupId>
+    <artifactId>temporal-rift-bom</artifactId>
+    <version>1.10.1</version>
 </parent>
 ```
 
 ## What's included
 
-| Category         | Plugin / Dependency                        |
-|------------------|--------------------------------------------|
-| Formatting       | Spotless + Palantir Java Format 2.90.0     |
-| Code quality     | Checkstyle 13.2.0 (Google style, adapted)  |
-| Enforcement      | Maven Enforcer (Java 25, Maven 3.9.13+)    |
-| Coverage         | JaCoCo (managed, opt-in per service)       |
-| API generation   | OpenAPI Generator 7.20.0 (managed, opt-in) |
+| Category           | Plugin / Dependency                                                     |
+|--------------------|-------------------------------------------------------------------------|
+| Formatting         | Spotless + Palantir Java Format 2.90.0                                  |
+| Code quality       | Checkstyle 13.2.0 (Google style, adapted)                               |
+| Enforcement        | Maven Enforcer (Java 25, Maven 3.9.13+)                                 |
+| Coverage           | JaCoCo (managed, opt-in per service)                                    |
+| API generation     | OpenAPI Generator 7.20.0 (managed, opt-in)                              |
 | Contract resources | Generic unpacking of spec-only OpenAPI and AsyncAPI modules from `apis` |
 
 ## Generating code from an `apis` contract
@@ -57,13 +57,13 @@ cannot overwrite one another. A consumer adds only the contract dependency and t
 and role are specific to that service.
 
 ```xml
+
 <dependency>
     <groupId>io.github.temporal-rift</groupId>
     <artifactId>session-event</artifactId>
     <version>1.0.0</version>
 </dependency>
 ```
-
 
 `role=client` generates a consumer instead — use `consumerApiPackage` in that case. For a REST contract, OpenAPI
 modules version their URL path prefix as a folder under `openapi/` (`v1/`, `v2/`, ...) — use the matching
