@@ -90,6 +90,11 @@ components:
                 type: string
                 minLength: 2
             required: [ code ]
+        kind:
+          type: string
+          enum: [ FRESH ]
+          minLength: 2
+          pattern: '[A-Z]+'
       required:
         [ targetEventIds, code, roundNumber, requiredName, nullableName, metadata, nullableCount, nullableScore,
           nullableFlag, nullableTags, nullableMetadata, nullableMetadataList ]
