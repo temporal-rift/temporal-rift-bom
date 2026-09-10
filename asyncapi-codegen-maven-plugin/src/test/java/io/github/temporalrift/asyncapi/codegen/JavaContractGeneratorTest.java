@@ -189,6 +189,11 @@ class JavaContractGeneratorTest {
                         "fixednamecollision",
                         "FooPayload"),
                 Arguments.of("rejectsQualifiedEnumValues", "qualified-enum-value", "qualifiedenumvalue", "FOO.BAR"),
+                Arguments.of(
+                        "rejectsHeterogeneousTypeArrays",
+                        "heterogeneous-type-array",
+                        "heterogeneoustypearray",
+                        "Only nullable single-type unions are supported"),
                 // an inline "generatedChannelContract" property normalizes to the same name as the enclosing class
                 // itself
                 Arguments.of(

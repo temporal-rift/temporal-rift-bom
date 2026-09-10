@@ -568,12 +568,16 @@ final class JavaContractGenerator {
         if (!type.isArray()) {
             return type.asText();
         }
+        String nonNullType = "";
         for (JsonNode value : type) {
             if (!"null".equals(value.asText())) {
-                return value.asText();
+                if (!nonNullType.isEmpty()) {
+                    throw new IllegalStateException("Only nullable single-type unions are supported: " + type);
+                }
+                nonNullType = value.asText();
             }
         }
-        return "";
+        return nonNullType;
     }
 
     private static String extractRefName(JsonNode propertySchema) {
