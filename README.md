@@ -73,9 +73,9 @@ input, and give that execution's `apiPackage`/`modelPackage` a matching `.v1` su
 version of the same contract doesn't collide. Plugin identity and shared defaults remain centralised here;
 generated package, output, and AsyncAPI role remain consumer-specific.
 
-Generated AsyncAPI payload records carry Bean Validation annotations derived from supported schema constraints. Consumers
-need a Jakarta Validation implementation with Hibernate Validator available to compile `uniqueItems` constraints; Spring
-Boot applications can use `spring-boot-starter-validation`.
+Generated AsyncAPI payload records carry Bean Validation annotations derived from supported schema constraints. Generated
+contracts require the Jakarta Validation API and Hibernate Validator on the compile classpath; Spring Boot applications
+can use `spring-boot-starter-validation`.
 
 ## IDE Setup (IntelliJ)
 

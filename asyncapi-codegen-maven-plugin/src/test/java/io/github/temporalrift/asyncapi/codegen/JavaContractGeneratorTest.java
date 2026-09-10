@@ -255,6 +255,12 @@ class JavaContractGeneratorTest {
                 .contains("@JsonProperty(required = true) String nullableName")
                 .doesNotContain("@NotNull String nullableName")
                 .contains("@JsonProperty(required = true) @NotNull @Valid Metadata metadata")
+                .contains("Integer nullableCount")
+                .contains("Double nullableScore")
+                .contains("Boolean nullableFlag")
+                .contains("@JsonProperty(required = true) @Size(min = 1, max = 2) List<String> nullableTags")
+                .contains("@JsonProperty(required = true) @Valid NullableMetadata nullableMetadata")
+                .contains("@JsonProperty(required = true) @Valid List<NullableMetadataListItem> nullableMetadataList")
                 .contains(
                         "public record Metadata(@JsonProperty(required = true) @DecimalMin(value = \"1\") int order)");
 
@@ -262,17 +268,69 @@ class JavaContractGeneratorTest {
         Class<?> payloadType =
                 Class.forName(contract.getName() + "$ThingHappenedPayload", true, contract.getClassLoader());
         Class<?> metadataType = Class.forName(contract.getName() + "$Metadata", true, contract.getClassLoader());
+        Class<?> nullableMetadataType =
+                Class.forName(contract.getName() + "$NullableMetadata", true, contract.getClassLoader());
         Object validMetadata = metadataType.getDeclaredConstructor(int.class).newInstance(1);
         Object validPayload = payloadType
                 .getDeclaredConstructor(
-                        List.class, String.class, int.class, Double.class, String.class, String.class, metadataType)
-                .newInstance(List.of(java.util.UUID.randomUUID()), "AB", 1, 1.0, "required", null, validMetadata);
+                        List.class,
+                        String.class,
+                        int.class,
+                        Double.class,
+                        String.class,
+                        String.class,
+                        metadataType,
+                        Integer.class,
+                        Double.class,
+                        Boolean.class,
+                        List.class,
+                        nullableMetadataType,
+                        List.class)
+                .newInstance(
+                        List.of(java.util.UUID.randomUUID()),
+                        "AB",
+                        1,
+                        1.0,
+                        "required",
+                        null,
+                        validMetadata,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null);
         Object invalidMetadata = metadataType.getDeclaredConstructor(int.class).newInstance(0);
         java.util.UUID duplicateId = java.util.UUID.randomUUID();
         Object invalidPayload = payloadType
                 .getDeclaredConstructor(
-                        List.class, String.class, int.class, Double.class, String.class, String.class, metadataType)
-                .newInstance(List.of(duplicateId, duplicateId), "a", 0, 0.5, null, null, invalidMetadata);
+                        List.class,
+                        String.class,
+                        int.class,
+                        Double.class,
+                        String.class,
+                        String.class,
+                        metadataType,
+                        Integer.class,
+                        Double.class,
+                        Boolean.class,
+                        List.class,
+                        nullableMetadataType,
+                        List.class)
+                .newInstance(
+                        List.of(duplicateId, duplicateId),
+                        "a",
+                        0,
+                        0.5,
+                        null,
+                        null,
+                        invalidMetadata,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null);
 
         try (ValidatorFactory validatorFactory = Validation.byDefaultProvider()
                 .configure()
@@ -287,6 +345,22 @@ class JavaContractGeneratorTest {
                     .contains("targetEventIds", "code", "roundNumber", "weight", "requiredName", "metadata.order")
                     .doesNotContain("nullableName");
         }
+
+        ObjectMapper mapper = new ObjectMapper();
+        Object deserialized = mapper.readValue("""
+                {"targetEventIds":["3fa85f64-5717-4562-b3fc-2c963f66afa6"],"code":"AB","roundNumber":1,
+                "weight":1.0,"requiredName":"required","nullableName":null,"metadata":{"order":1},
+                "nullableCount":null,"nullableScore":null,"nullableFlag":null,"nullableTags":null,
+                "nullableMetadata":null,"nullableMetadataList":null}
+                """, payloadType);
+        assertThat(payloadType.getMethod("nullableCount").invoke(deserialized)).isNull();
+        assertThat(payloadType.getMethod("nullableScore").invoke(deserialized)).isNull();
+        assertThat(payloadType.getMethod("nullableFlag").invoke(deserialized)).isNull();
+        assertThat(payloadType.getMethod("nullableTags").invoke(deserialized)).isNull();
+        assertThat(payloadType.getMethod("nullableMetadata").invoke(deserialized))
+                .isNull();
+        assertThat(payloadType.getMethod("nullableMetadataList").invoke(deserialized))
+                .isNull();
     }
 
     @Test

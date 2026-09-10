@@ -348,7 +348,7 @@ final class JavaContractGenerator {
     }
 
     private boolean requiresCascadeValidation(JsonNode schema, Path schemaFile) {
-        String type = schema.path("type").asText();
+        String type = schemaType(schema);
         if ("object".equals(type) || (type.isEmpty() && schema.has(ONE_OF))) {
             return true;
         }
@@ -356,12 +356,12 @@ final class JavaContractGenerator {
             return false;
         }
         AsyncApiDocument.Resolved items = document.resolve(schema.path("items"), schemaFile);
-        String itemType = items.node().path("type").asText();
+        String itemType = schemaType(items.node());
         return "object".equals(itemType) || (itemType.isEmpty() && items.node().has(ONE_OF));
     }
 
     private static void appendSizeAnnotation(JsonNode schema, StringBuilder annotations) {
-        String type = schema.path("type").asText();
+        String type = schemaType(schema);
         String minimum = "array".equals(type) ? "minItems" : "minLength";
         String maximum = "array".equals(type) ? "maxItems" : "maxLength";
         appendSizeAnnotation(schema, annotations, minimum, maximum);
@@ -515,7 +515,7 @@ final class JavaContractGenerator {
         AsyncApiDocument.Resolved resolved = document.resolve(propertySchema, specFile);
         JsonNode schema = resolved.node();
         Path effectiveFile = resolved.file();
-        String type = schema.path("type").asText();
+        String type = schemaType(schema);
         // a oneOf schema has no "type" of its own; its merged branches are generated as a record, same as "object"
         if (type.isEmpty() && schema.has(ONE_OF)) {
             type = "object";
@@ -524,9 +524,9 @@ final class JavaContractGenerator {
 
         return switch (type) {
             case "string" -> stringJavaType(schema, format, refName, contextName);
-            case "integer" -> integerJavaType(format, required);
-            case "number" -> required ? "double" : "Double";
-            case BOOLEAN_TYPE -> required ? BOOLEAN_TYPE : "Boolean";
+            case "integer" -> integerJavaType(format, required && !isNullable(schema));
+            case "number" -> required && !isNullable(schema) ? "double" : "Double";
+            case BOOLEAN_TYPE -> required && !isNullable(schema) ? BOOLEAN_TYPE : "Boolean";
             case "array" -> {
                 // an item present in a list is never itself individually absent, regardless of whether the list
                 // property is required
@@ -536,6 +536,19 @@ final class JavaContractGenerator {
             case "object" -> registerRecord(capitalize(refName != null ? refName : contextName), schema, effectiveFile);
             default -> "Object";
         };
+    }
+
+    private static String schemaType(JsonNode schema) {
+        JsonNode type = schema.path("type");
+        if (!type.isArray()) {
+            return type.asText();
+        }
+        for (JsonNode value : type) {
+            if (!"null".equals(value.asText())) {
+                return value.asText();
+            }
+        }
+        return "";
     }
 
     private static String extractRefName(JsonNode propertySchema) {
