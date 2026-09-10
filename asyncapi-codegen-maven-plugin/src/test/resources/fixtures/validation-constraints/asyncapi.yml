@@ -1,0 +1,63 @@
+asyncapi: 3.0.0
+info:
+  title: Validation constraints fixture
+  version: 1.0.0
+
+channels:
+  gameEvents:
+    address: game.events
+    messages:
+      thingHappened:
+        $ref: '#/components/messages/ThingHappened'
+
+operations:
+  publishThingHappened:
+    action: send
+    channel:
+      $ref: '#/channels/gameEvents'
+    messages:
+      - $ref: '#/channels/gameEvents/messages/thingHappened'
+
+components:
+  messages:
+    ThingHappened:
+      name: ThingHappened
+      payload:
+        $ref: '#/components/schemas/ThingHappenedPayload'
+
+  schemas:
+    ThingHappenedPayload:
+      type: object
+      properties:
+        targetEventIds:
+          type: array
+          minItems: 1
+          maxItems: 3
+          uniqueItems: true
+          items: { type: string, format: uuid }
+        code:
+          type: string
+          minLength: 2
+          maxLength: 5
+          pattern: '[A-Z]+'
+        roundNumber:
+          type: integer
+          minimum: 1
+          maximum: 3
+        weight:
+          type: number
+          exclusiveMinimum: 0.5
+          exclusiveMaximum: 4.5
+        requiredName:
+          type: string
+        nullableName:
+          type: string
+          nullable: true
+        metadata:
+          type: object
+          properties:
+            order:
+              type: integer
+              minimum: 1
+          required: [ order ]
+      required: [ targetEventIds, code, roundNumber, requiredName, nullableName, metadata ]

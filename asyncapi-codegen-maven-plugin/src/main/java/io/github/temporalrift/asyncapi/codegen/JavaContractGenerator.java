@@ -195,6 +195,13 @@ final class JavaContractGenerator {
 
                 import com.fasterxml.jackson.annotation.JsonCreator;
                 import com.fasterxml.jackson.annotation.JsonProperty;
+                import jakarta.validation.Valid;
+                import jakarta.validation.constraints.DecimalMax;
+                import jakarta.validation.constraints.DecimalMin;
+                import jakarta.validation.constraints.NotNull;
+                import jakarta.validation.constraints.Pattern;
+                import jakarta.validation.constraints.Size;
+                import org.hibernate.validator.constraints.UniqueElements;
 
                 /** Generated from the AsyncAPI 3 channel and message contract. */
                 public final class %s {
@@ -289,11 +296,136 @@ final class JavaContractGenerator {
             if (info.required()) {
                 fields.append("@JsonProperty(required = true) ");
             }
-            fields.append(javaType(info.schema(), info.schemaFile(), propertyName, info.required()))
+            String javaType = javaType(info.schema(), info.schemaFile(), propertyName, info.required());
+            fields.append(validationAnnotations(info, javaType))
+                    .append(javaType)
                     .append(' ')
                     .append(fieldName);
         }
         return fields.toString();
+    }
+
+    private String validationAnnotations(PropertyInfo info, String javaType) {
+        AsyncApiDocument.Resolved resolved = document.resolve(info.schema(), info.schemaFile());
+        JsonNode schema = resolved.node();
+        StringBuilder annotations = new StringBuilder();
+        if (info.required() && !isNullable(schema) && !isPrimitive(javaType)) {
+            annotations.append("@NotNull ");
+        }
+        if (requiresCascadeValidation(schema, resolved.file())) {
+            annotations.append("@Valid ");
+        }
+        appendSizeAnnotation(schema, annotations);
+        appendPatternAnnotation(schema, annotations);
+        appendNumericBoundAnnotations(schema, annotations);
+        if (schema.path("uniqueItems").asBoolean()) {
+            annotations.append("@UniqueElements ");
+        }
+        return annotations.toString();
+    }
+
+    private static boolean isNullable(JsonNode schema) {
+        if (schema.path("nullable").asBoolean()) {
+            return true;
+        }
+        JsonNode type = schema.path("type");
+        if (!type.isArray()) {
+            return false;
+        }
+        for (JsonNode value : type) {
+            if ("null".equals(value.asText())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean isPrimitive(String javaType) {
+        return "int".equals(javaType)
+                || "long".equals(javaType)
+                || "double".equals(javaType)
+                || BOOLEAN_TYPE.equals(javaType);
+    }
+
+    private boolean requiresCascadeValidation(JsonNode schema, Path schemaFile) {
+        String type = schema.path("type").asText();
+        if ("object".equals(type) || (type.isEmpty() && schema.has(ONE_OF))) {
+            return true;
+        }
+        if (!"array".equals(type)) {
+            return false;
+        }
+        AsyncApiDocument.Resolved items = document.resolve(schema.path("items"), schemaFile);
+        String itemType = items.node().path("type").asText();
+        return "object".equals(itemType) || (itemType.isEmpty() && items.node().has(ONE_OF));
+    }
+
+    private static void appendSizeAnnotation(JsonNode schema, StringBuilder annotations) {
+        String type = schema.path("type").asText();
+        String minimum = "array".equals(type) ? "minItems" : "minLength";
+        String maximum = "array".equals(type) ? "maxItems" : "maxLength";
+        appendSizeAnnotation(schema, annotations, minimum, maximum);
+    }
+
+    private static void appendSizeAnnotation(
+            JsonNode schema, StringBuilder annotations, String minimum, String maximum) {
+        boolean hasMinimum = schema.has(minimum);
+        boolean hasMaximum = schema.has(maximum);
+        if (!hasMinimum && !hasMaximum) {
+            return;
+        }
+        annotations.append("@Size(");
+        if (hasMinimum) {
+            annotations.append("min = ").append(schema.path(minimum).asInt());
+        }
+        if (hasMinimum && hasMaximum) {
+            annotations.append(", ");
+        }
+        if (hasMaximum) {
+            annotations.append("max = ").append(schema.path(maximum).asInt());
+        }
+        annotations.append(") ");
+    }
+
+    private static void appendPatternAnnotation(JsonNode schema, StringBuilder annotations) {
+        if (schema.has("pattern")) {
+            String pattern = stringLiteral(schema.path("pattern").asText());
+            annotations.append("@Pattern(regexp = \"" + pattern + "\") ");
+        }
+    }
+
+    private static void appendNumericBoundAnnotations(JsonNode schema, StringBuilder annotations) {
+        appendNumericBoundAnnotation(schema, annotations, "minimum", "exclusiveMinimum", "DecimalMin");
+        appendNumericBoundAnnotation(schema, annotations, "maximum", "exclusiveMaximum", "DecimalMax");
+    }
+
+    private static void appendNumericBoundAnnotation(
+            JsonNode schema,
+            StringBuilder annotations,
+            String inclusiveKeyword,
+            String exclusiveKeyword,
+            String annotation) {
+        JsonNode exclusive = schema.path(exclusiveKeyword);
+        if (exclusive.isNumber()) {
+            appendDecimalBoundAnnotation(annotations, annotation, exclusive.asText(), false);
+        } else if (schema.has(inclusiveKeyword)) {
+            appendDecimalBoundAnnotation(
+                    annotations, annotation, schema.path(inclusiveKeyword).asText(), !exclusive.asBoolean());
+        }
+    }
+
+    private static void appendDecimalBoundAnnotation(
+            StringBuilder annotations, String annotation, String value, boolean inclusive) {
+        annotations
+                .append('@')
+                .append(annotation)
+                .append("(value = \"")
+                .append(stringLiteral(value))
+                .append('\"');
+        if (!inclusive) {
+            annotations.append(", inclusive = false");
+        }
+        annotations.append(") ");
     }
 
     private record PropertyInfo(JsonNode schema, boolean required, Path schemaFile) {}

@@ -33,7 +33,7 @@ publication to bridge a consumer to an unreleased BOM version.
 <parent>
     <groupId>io.github.temporal-rift</groupId>
     <artifactId>temporal-rift-bom</artifactId>
-    <version>1.10.2</version>
+    <version>1.11.0</version>
 </parent>
 ```
 
@@ -72,6 +72,10 @@ version-qualified path such as
 input, and give that execution's `apiPackage`/`modelPackage` a matching `.v1` suffix so generating more than one
 version of the same contract doesn't collide. Plugin identity and shared defaults remain centralised here;
 generated package, output, and AsyncAPI role remain consumer-specific.
+
+Generated AsyncAPI payload records carry Bean Validation annotations derived from supported schema constraints. Consumers
+need a Jakarta Validation implementation with Hibernate Validator available to compile `uniqueItems` constraints; Spring
+Boot applications can use `spring-boot-starter-validation`.
 
 ## IDE Setup (IntelliJ)
 

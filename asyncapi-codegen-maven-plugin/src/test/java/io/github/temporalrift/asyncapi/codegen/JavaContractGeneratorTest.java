@@ -10,11 +10,16 @@ import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Stream;
 import javax.tools.JavaCompiler;
 import javax.tools.StandardJavaFileManager;
 import javax.tools.ToolProvider;
 
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validation;
+import jakarta.validation.ValidatorFactory;
+import org.hibernate.validator.messageinterpolation.ParameterMessageInterpolator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -94,9 +99,9 @@ class JavaContractGeneratorTest {
                 // record must merge both branches' fields rather than come out empty. winningOutcomeId is required
                 // in only one branch, so it must still be present in the merged record (as a nullable UUID, not
                 // dropped).
-                .contains("public record EraTerminalResolution(@JsonProperty(required = true) UUID eventId, "
-                        + "@JsonProperty(required = true) int revealIndex, "
-                        + "@JsonProperty(required = true) String terminalState, UUID winningOutcomeId)");
+                .contains("public record EraTerminalResolution(@JsonProperty(required = true) @NotNull UUID eventId, "
+                        + "@JsonProperty(required = true) @DecimalMin(value = \"0\") int revealIndex, "
+                        + "@JsonProperty(required = true) @NotNull String terminalState, UUID winningOutcomeId)");
 
         compileOrFail(source, "timelineevents", "GeneratedChannelContract");
     }
@@ -228,6 +233,60 @@ class JavaContractGeneratorTest {
                 .contains("Boolean optionalFlag");
 
         compileOrFail(source, "optionalfields", "GeneratedChannelContract");
+    }
+
+    @Test
+    void generatesSchemaValidationAnnotationsAndEnforcesThemAtRuntime()
+            throws IOException, URISyntaxException, ReflectiveOperationException {
+        AsyncApiDocument document = AsyncApiDocument.parse(fixture("validation-constraints/asyncapi.yml"));
+        String source = new JavaContractGenerator(
+                        document, "io.github.temporalrift.asyncapi.validationconstraints", "GeneratedChannelContract")
+                .generate(onlyChannel(document));
+
+        assertThat(source)
+                .contains("import jakarta.validation.Valid;")
+                .contains("import org.hibernate.validator.constraints.UniqueElements;")
+                .contains("@JsonProperty(required = true) @NotNull @Size(min = 1, max = 3) @UniqueElements List<UUID>")
+                .contains(
+                        "@JsonProperty(required = true) @NotNull @Size(min = 2, max = 5) @Pattern(regexp = \"[A-Z]+\")")
+                .contains("@JsonProperty(required = true) @DecimalMin(value = \"1\") @DecimalMax(value = \"3\") int")
+                .contains("@DecimalMin(value = \"0.5\", inclusive = false) "
+                        + "@DecimalMax(value = \"4.5\", inclusive = false)")
+                .contains("@JsonProperty(required = true) String nullableName")
+                .doesNotContain("@NotNull String nullableName")
+                .contains("@JsonProperty(required = true) @NotNull @Valid Metadata metadata")
+                .contains(
+                        "public record Metadata(@JsonProperty(required = true) @DecimalMin(value = \"1\") int order)");
+
+        Class<?> contract = compileAndLoad(source, "validationconstraints", "GeneratedChannelContract");
+        Class<?> payloadType =
+                Class.forName(contract.getName() + "$ThingHappenedPayload", true, contract.getClassLoader());
+        Class<?> metadataType = Class.forName(contract.getName() + "$Metadata", true, contract.getClassLoader());
+        Object validMetadata = metadataType.getDeclaredConstructor(int.class).newInstance(1);
+        Object validPayload = payloadType
+                .getDeclaredConstructor(
+                        List.class, String.class, int.class, Double.class, String.class, String.class, metadataType)
+                .newInstance(List.of(java.util.UUID.randomUUID()), "AB", 1, 1.0, "required", null, validMetadata);
+        Object invalidMetadata = metadataType.getDeclaredConstructor(int.class).newInstance(0);
+        java.util.UUID duplicateId = java.util.UUID.randomUUID();
+        Object invalidPayload = payloadType
+                .getDeclaredConstructor(
+                        List.class, String.class, int.class, Double.class, String.class, String.class, metadataType)
+                .newInstance(List.of(duplicateId, duplicateId), "a", 0, 0.5, null, null, invalidMetadata);
+
+        try (ValidatorFactory validatorFactory = Validation.byDefaultProvider()
+                .configure()
+                .messageInterpolator(new ParameterMessageInterpolator())
+                .buildValidatorFactory()) {
+            var validator = validatorFactory.getValidator();
+            assertThat(validator.validate(validPayload)).isEmpty();
+
+            Set<ConstraintViolation<Object>> violations = validator.validate(invalidPayload);
+            assertThat(violations)
+                    .extracting(violation -> violation.getPropertyPath().toString())
+                    .contains("targetEventIds", "code", "roundNumber", "weight", "requiredName", "metadata.order")
+                    .doesNotContain("nullableName");
+        }
     }
 
     @Test

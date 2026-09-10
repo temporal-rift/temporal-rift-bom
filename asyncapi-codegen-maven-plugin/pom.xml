@@ -9,7 +9,7 @@
          the same reason build-tools is standalone. Must be built and published before the BOM. -->
     <groupId>io.github.temporal-rift</groupId>
     <artifactId>asyncapi-codegen-maven-plugin</artifactId>
-    <version>0.4.0</version>
+    <version>0.5.0</version>
     <packaging>maven-plugin</packaging>
 
     <name>Temporal Rift AsyncAPI Codegen Maven Plugin</name>
@@ -56,6 +56,7 @@
         <maven-plugin-tools.version>3.15.2</maven-plugin-tools.version>
         <jackson-dataformat-yaml.version>2.18.9</jackson-dataformat-yaml.version>
         <jackson-databind.version>3.1.5</jackson-databind.version>
+        <hibernate-validator.version>9.0.1.Final</hibernate-validator.version>
         <junit-jupiter.version>6.0.3</junit-jupiter.version>
         <assertj.version>3.27.7</assertj.version>
         <jacoco-maven-plugin.version>0.8.15</jacoco-maven-plugin.version>
@@ -119,6 +120,12 @@
             <groupId>tools.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
             <version>${jackson-databind.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.hibernate.validator</groupId>
+            <artifactId>hibernate-validator</artifactId>
+            <version>${hibernate-validator.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
