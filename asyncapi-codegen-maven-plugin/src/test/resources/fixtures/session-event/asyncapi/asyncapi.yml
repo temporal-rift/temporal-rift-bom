@@ -549,6 +549,8 @@ components:
         playerId: { type: string, format: uuid }
         cards:
           type: array
+          minItems: 7
+          maxItems: 7
           items: { $ref: '#/components/schemas/HandDealtCardInstance' }
       required: [ gameId, eraNumber, playerId, cards ]
 

@@ -315,10 +315,10 @@ final class JavaContractGenerator {
         if (requiresCascadeValidation(schema, resolved.file())) {
             annotations.append("@Valid ");
         }
-        appendSizeAnnotation(schema, annotations);
-        appendPatternAnnotation(schema, annotations);
-        appendNumericBoundAnnotations(schema, annotations);
-        if (schema.path("uniqueItems").asBoolean()) {
+        appendSizeAnnotation(schema, javaType, annotations);
+        appendPatternAnnotation(schema, javaType, annotations);
+        appendNumericBoundAnnotations(schema, javaType, annotations);
+        if (isList(javaType) && schema.path("uniqueItems").asBoolean()) {
             annotations.append("@UniqueElements ");
         }
         return annotations.toString();
@@ -347,6 +347,19 @@ final class JavaContractGenerator {
                 || BOOLEAN_TYPE.equals(javaType);
     }
 
+    private static boolean isList(String javaType) {
+        return javaType.startsWith("List<");
+    }
+
+    private static boolean isNumeric(String javaType) {
+        return "int".equals(javaType)
+                || "Integer".equals(javaType)
+                || "long".equals(javaType)
+                || "Long".equals(javaType)
+                || "double".equals(javaType)
+                || "Double".equals(javaType);
+    }
+
     private boolean requiresCascadeValidation(JsonNode schema, Path schemaFile) {
         String type = schemaType(schema);
         if ("object".equals(type) || (type.isEmpty() && schema.has(ONE_OF))) {
@@ -360,8 +373,11 @@ final class JavaContractGenerator {
         return "object".equals(itemType) || (itemType.isEmpty() && items.node().has(ONE_OF));
     }
 
-    private static void appendSizeAnnotation(JsonNode schema, StringBuilder annotations) {
+    private static void appendSizeAnnotation(JsonNode schema, String javaType, StringBuilder annotations) {
         String type = schemaType(schema);
+        if (!"String".equals(javaType) && !isList(javaType)) {
+            return;
+        }
         String minimum = "array".equals(type) ? "minItems" : "minLength";
         String maximum = "array".equals(type) ? "maxItems" : "maxLength";
         appendSizeAnnotation(schema, annotations, minimum, maximum);
@@ -387,14 +403,17 @@ final class JavaContractGenerator {
         annotations.append(") ");
     }
 
-    private static void appendPatternAnnotation(JsonNode schema, StringBuilder annotations) {
-        if (schema.has("pattern")) {
+    private static void appendPatternAnnotation(JsonNode schema, String javaType, StringBuilder annotations) {
+        if ("String".equals(javaType) && schema.has("pattern")) {
             String pattern = stringLiteral(schema.path("pattern").asText());
             annotations.append("@Pattern(regexp = \"" + pattern + "\") ");
         }
     }
 
-    private static void appendNumericBoundAnnotations(JsonNode schema, StringBuilder annotations) {
+    private static void appendNumericBoundAnnotations(JsonNode schema, String javaType, StringBuilder annotations) {
+        if (!isNumeric(javaType)) {
+            return;
+        }
         appendNumericBoundAnnotation(schema, annotations, "minimum", "exclusiveMinimum", "DecimalMin");
         appendNumericBoundAnnotation(schema, annotations, "maximum", "exclusiveMaximum", "DecimalMax");
     }

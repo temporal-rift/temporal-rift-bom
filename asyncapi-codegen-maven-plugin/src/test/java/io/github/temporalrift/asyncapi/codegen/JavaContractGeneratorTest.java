@@ -51,6 +51,7 @@ class JavaContractGeneratorTest {
                 .contains("public enum Faction {")
                 // array of $ref'd objects becomes List<Type>
                 .contains("List<ActionSummary>")
+                .contains("@Size(min = 1, max = 3) @UniqueElements List<UUID> targetEventIds")
                 // eventType dispatch
                 .contains("CARD_PLAYED_EVENT_TYPE = \"CardPlayed\"")
                 .contains("case CARD_PLAYED_EVENT_TYPE -> {")
@@ -71,7 +72,8 @@ class JavaContractGeneratorTest {
                 .generate(onlyChannel(document));
         assertThat(source)
                 .contains("public record EventsDrawnFutureEvent(")
-                .contains("public record GameEndedPlayerScoreResult(");
+                .contains("public record GameEndedPlayerScoreResult(")
+                .contains("@NotNull @Valid @Size(min = 7, max = 7) List<HandDealtCardInstance> cards");
         compileOrFail(source, "sessionevents", "GeneratedChannelContract");
     }
 
@@ -81,7 +83,9 @@ class JavaContractGeneratorTest {
         String source = new JavaContractGenerator(
                         document, "io.github.temporalrift.asyncapi.scoringevents", "GeneratedChannelContract")
                 .generate(onlyChannel(document));
-        assertThat(source).contains("public record ScoreUpdate(");
+        assertThat(source)
+                .contains("public record ScoreUpdate(")
+                .contains("public record ScoresUpdatedPayload(@JsonProperty(required = true) @NotNull UUID gameId");
         compileOrFail(source, "scoringevents", "GeneratedChannelContract");
     }
 
@@ -261,6 +265,8 @@ class JavaContractGeneratorTest {
                 .contains("@JsonProperty(required = true) @Size(min = 1, max = 2) List<String> nullableTags")
                 .contains("@JsonProperty(required = true) @Valid NullableMetadata nullableMetadata")
                 .contains("@JsonProperty(required = true) @Valid List<NullableMetadataListItem> nullableMetadataList")
+                .contains("Kind kind")
+                .doesNotContain("@Size(min = 2) @Pattern(regexp = \"[A-Z]+\") Kind kind")
                 .contains(
                         "public record Metadata(@JsonProperty(required = true) @DecimalMin(value = \"1\") int order)");
 
@@ -285,7 +291,8 @@ class JavaContractGeneratorTest {
                         Boolean.class,
                         List.class,
                         nullableMetadataType,
-                        List.class)
+                        List.class,
+                        Class.forName(contract.getName() + "$Kind", true, contract.getClassLoader()))
                 .newInstance(
                         List.of(java.util.UUID.randomUUID()),
                         "AB",
@@ -294,6 +301,7 @@ class JavaContractGeneratorTest {
                         "required",
                         null,
                         validMetadata,
+                        null,
                         null,
                         null,
                         null,
@@ -316,7 +324,8 @@ class JavaContractGeneratorTest {
                         Boolean.class,
                         List.class,
                         nullableMetadataType,
-                        List.class)
+                        List.class,
+                        Class.forName(contract.getName() + "$Kind", true, contract.getClassLoader()))
                 .newInstance(
                         List.of(duplicateId, duplicateId),
                         "a",
@@ -325,6 +334,7 @@ class JavaContractGeneratorTest {
                         null,
                         null,
                         invalidMetadata,
+                        null,
                         null,
                         null,
                         null,
