@@ -47,7 +47,7 @@ final class JavaContractGenerator {
             "continue",
             "default",
             "do",
-            "double",
+            DOUBLE_TYPE,
             "else",
             "enum",
             "extends",
