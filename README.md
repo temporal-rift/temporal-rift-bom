@@ -33,7 +33,7 @@ publication to bridge a consumer to an unreleased BOM version.
 <parent>
     <groupId>io.github.temporal-rift</groupId>
     <artifactId>temporal-rift-bom</artifactId>
-    <version>1.11.0</version>
+    <version>1.12.0</version>
 </parent>
 ```
 

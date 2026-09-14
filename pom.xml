@@ -13,7 +13,7 @@
 
     <groupId>io.github.temporal-rift</groupId>
     <artifactId>temporal-rift-bom</artifactId>
-    <version>1.11.0</version>
+    <version>1.12.0</version>
     <packaging>pom</packaging>
 
     <name>Temporal Rift BOM</name>
@@ -66,11 +66,14 @@
         <build-tools.version>1.0.4</build-tools.version>
 
         <!-- Security patches (override spring-boot-starter-parent managed versions) -->
-        <jackson-2-bom.version>2.21.5</jackson-2-bom.version>
-        <jackson-bom.version>3.1.5</jackson-bom.version>
+        <jackson-2-bom.version>2.21.6</jackson-2-bom.version>
+        <jackson-bom.version>3.1.6</jackson-bom.version>
+        <lz4-java.version>1.11.1</lz4-java.version>
         <logback.version>1.5.36</logback.version>
         <postgresql.version>42.7.12</postgresql.version>
+        <snappy-java.version>1.1.10.8</snappy-java.version>
         <tomcat.version>11.0.23</tomcat.version>
+        <zstd-jni.version>1.5.7-14</zstd-jni.version>
 
         <!-- Third-party -->
         <mapstruct.version>1.6.3</mapstruct.version>
@@ -138,6 +141,23 @@
                 <artifactId>awaitility</artifactId>
                 <version>${awaitility.version}</version>
                 <scope>test</scope>
+            </dependency>
+
+            <!-- Kafka's managed compression codecs lag patched releases. -->
+            <dependency>
+                <groupId>at.yawk.lz4</groupId>
+                <artifactId>lz4-java</artifactId>
+                <version>${lz4-java.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.luben</groupId>
+                <artifactId>zstd-jni</artifactId>
+                <version>${zstd-jni.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.xerial.snappy</groupId>
+                <artifactId>snappy-java</artifactId>
+                <version>${snappy-java.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
