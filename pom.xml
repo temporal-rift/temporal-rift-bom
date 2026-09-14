@@ -65,12 +65,13 @@
         <!-- Temporal Rift -->
         <build-tools.version>1.0.4</build-tools.version>
 
-        <!-- Security patches (override spring-boot-starter-parent managed versions) -->
+        <!-- Security version overrides (override spring-boot-starter-parent managed versions) -->
         <jackson-2-bom.version>2.21.6</jackson-2-bom.version>
         <jackson-bom.version>3.1.6</jackson-bom.version>
-        <lz4-java.version>1.11.1</lz4-java.version>
+        <lz4-java.version>1.11.2</lz4-java.version>
         <logback.version>1.5.36</logback.version>
         <postgresql.version>42.7.12</postgresql.version>
+        <!-- Latest available release; CVE-2026-90559 remains unpatched and requires consumer rescan. -->
         <snappy-java.version>1.1.10.8</snappy-java.version>
         <tomcat.version>11.0.23</tomcat.version>
         <zstd-jni.version>1.5.7-14</zstd-jni.version>
@@ -121,6 +122,23 @@
                 <scope>import</scope>
             </dependency>
 
+            <!-- Transitive security version overrides -->
+            <dependency>
+                <groupId>at.yawk.lz4</groupId>
+                <artifactId>lz4-java</artifactId>
+                <version>${lz4-java.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.luben</groupId>
+                <artifactId>zstd-jni</artifactId>
+                <version>${zstd-jni.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.xerial.snappy</groupId>
+                <artifactId>snappy-java</artifactId>
+                <version>${snappy-java.version}</version>
+            </dependency>
+
             <!-- OpenAPI generated code -->
             <dependency>
                 <groupId>io.swagger.core.v3</groupId>
@@ -141,23 +159,6 @@
                 <artifactId>awaitility</artifactId>
                 <version>${awaitility.version}</version>
                 <scope>test</scope>
-            </dependency>
-
-            <!-- Kafka's managed compression codecs lag patched releases. -->
-            <dependency>
-                <groupId>at.yawk.lz4</groupId>
-                <artifactId>lz4-java</artifactId>
-                <version>${lz4-java.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.github.luben</groupId>
-                <artifactId>zstd-jni</artifactId>
-                <version>${zstd-jni.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.xerial.snappy</groupId>
-                <artifactId>snappy-java</artifactId>
-                <version>${snappy-java.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
