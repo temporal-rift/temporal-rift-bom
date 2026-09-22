@@ -13,7 +13,7 @@
 
     <groupId>io.github.temporal-rift</groupId>
     <artifactId>temporal-rift-bom</artifactId>
-    <version>1.12.0</version>
+    <version>1.13.0</version>
     <packaging>pom</packaging>
 
     <name>Temporal Rift BOM</name>
@@ -235,6 +235,28 @@
                             <id>report</id>
                             <goals>
                                 <goal>report</goal>
+                            </goals>
+                            <configuration>
+                                <formats>
+                                    <format>XML</format>
+                                </formats>
+                            </configuration>
+                        </execution>
+                        <!-- Modules whose only tests are Failsafe *IT classes (e.g. infrastructure's
+                             system-tests) produce zero Surefire-covered lines without these: prepare-agent
+                             above only instruments the JVM Surefire forks at the `test` phase. Additive for
+                             every other module too — a module with no failsafe executions just gets an
+                             empty jacoco-it.exec and a harmless near-empty report-integration output. -->
+                        <execution>
+                            <id>prepare-agent-integration</id>
+                            <goals>
+                                <goal>prepare-agent-integration</goal>
+                            </goals>
+                        </execution>
+                        <execution>
+                            <id>report-integration</id>
+                            <goals>
+                                <goal>report-integration</goal>
                             </goals>
                             <configuration>
                                 <formats>
