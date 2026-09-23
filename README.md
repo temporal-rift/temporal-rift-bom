@@ -33,7 +33,7 @@ publication to bridge a consumer to an unreleased BOM version.
 <parent>
     <groupId>io.github.temporal-rift</groupId>
     <artifactId>temporal-rift-bom</artifactId>
-    <version>1.12.0</version>
+    <version>1.13.1</version>
 </parent>
 ```
 
@@ -41,11 +41,11 @@ publication to bridge a consumer to an unreleased BOM version.
 
 | Category           | Plugin / Dependency                                                     |
 |--------------------|-------------------------------------------------------------------------|
-| Formatting         | Spotless + Palantir Java Format 2.90.0                                  |
-| Code quality       | Checkstyle 13.2.0 (Google style, adapted)                               |
-| Enforcement        | Maven Enforcer (Java 25, Maven 3.9.13+)                                 |
+| Formatting         | Spotless + Palantir Java Format 2.99.0                                  |
+| Code quality       | Checkstyle 14.1.0 (Google style, adapted)                               |
+| Enforcement        | Maven Enforcer (Java 26, Maven 3.9.13+)                                 |
 | Coverage           | JaCoCo (managed, opt-in per service)                                    |
-| API generation     | OpenAPI Generator 7.20.0 (managed, opt-in)                              |
+| API generation     | OpenAPI Generator 7.25.0 (managed, opt-in)                              |
 | Contract resources | Generic unpacking of spec-only OpenAPI and AsyncAPI modules from `apis` |
 
 ## Generating code from an `apis` contract
