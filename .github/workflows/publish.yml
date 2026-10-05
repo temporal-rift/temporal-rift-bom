@@ -27,6 +27,7 @@ jobs:
           java-version: 26
           java-distribution: temurin
           maven-version: ${{ env.MAVEN_VERSION }}
+          settings-githubServer: false
           settings-servers: |
             [
               {
