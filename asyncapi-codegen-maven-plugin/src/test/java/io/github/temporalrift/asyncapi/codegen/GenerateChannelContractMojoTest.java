@@ -2,6 +2,7 @@ package io.github.temporalrift.asyncapi.codegen;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -178,6 +179,74 @@ class GenerateChannelContractMojoTest {
         assertThatThrownBy(mojo::execute).isInstanceOf(MojoException.class).hasMessageContaining("New");
     }
 
+    @Test
+    void removesOutputLeftByAPriorRun(@org.junit.jupiter.api.io.TempDir Path tempDir) throws IOException {
+        Path staleSource = tempDir.resolve("generated-sources/io/github/temporalrift/asyncapi/removed/Stale.java");
+        Files.createDirectories(staleSource.getParent());
+        Files.writeString(staleSource, "class Stale {}");
+        writeSpec(tempDir, "first-spec", "First Title", "thingOne", "ThingOne");
+
+        mojoFor(tempDir).execute();
+
+        assertThat(staleSource.getParent()).doesNotExist();
+        assertThat(tempDir.resolve(
+                        "generated-sources/io/github/temporalrift/asyncapi/firsttitle/GeneratedChannelContract.java"))
+                .exists();
+    }
+
+    @Test
+    void registersNoSourceRootWhenTheUnpackedSpecsHoldNoAsyncApiDocument(@org.junit.jupiter.api.io.TempDir Path tempDir)
+            throws IOException {
+        Path openApiDir = tempDir.resolve("dependency-specs/session-api/openapi/v1");
+        Files.createDirectories(openApiDir);
+        Files.writeString(openApiDir.resolve("session.yml"), "openapi: 3.1.0");
+
+        mojoFor(tempDir).execute();
+
+        assertThat(tempDir.resolve("generated-sources")).doesNotExist();
+        verifyNoInteractions(projectManager);
+    }
+
+    @Test
+    void generatesNothingForASpecWithoutChannels(@org.junit.jupiter.api.io.TempDir Path tempDir) throws IOException {
+        writeRawSpec(tempDir, "empty-spec", """
+                asyncapi: 3.0.0
+                info:
+                  title: No Channels
+                  version: 1.0.0
+                """);
+        GenerateChannelContractMojo mojo = mojoFor(tempDir);
+
+        mojo.execute();
+
+        assertThat(tempDir.resolve("generated-sources/io/github/temporalrift/asyncapi/nochannels"))
+                .isEmptyDirectory();
+        verify(mojo.log).warn(contains("declares no channels"));
+    }
+
+    @Test
+    void rejectsASpecThatIsNotValidYaml(@org.junit.jupiter.api.io.TempDir Path tempDir) throws IOException {
+        writeRawSpec(tempDir, "malformed-spec", "info: [unclosed");
+
+        assertThatThrownBy(mojoFor(tempDir)::execute)
+                .isInstanceOf(MojoException.class)
+                .hasMessageContaining("Failed to generate contract for")
+                .hasMessageContaining("malformed-spec");
+    }
+
+    @Test
+    void reportsTheSpecWhoseSchemaCannotBeGenerated(@org.junit.jupiter.api.io.TempDir Path tempDir) throws Exception {
+        Path fixture = Path.of(GenerateChannelContractMojoTest.class
+                .getResource("/fixtures/unsupported-schema-shape/asyncapi.yml")
+                .toURI());
+        writeRawSpec(tempDir, "unsupported-spec", Files.readString(fixture));
+
+        assertThatThrownBy(mojoFor(tempDir)::execute)
+                .isInstanceOf(MojoException.class)
+                .hasMessageContaining("unsupported-spec")
+                .hasMessageContaining("oneOf");
+    }
+
     private GenerateChannelContractMojo mojoFor(Path tempDir) {
         GenerateChannelContractMojo mojo = new GenerateChannelContractMojo();
         mojo.log = mock(Log.class);
@@ -189,12 +258,17 @@ class GenerateChannelContractMojoTest {
         return mojo;
     }
 
-    private static void writeSpec(Path tempDir, String specDirName, String title, String messageKey, String messageName)
-            throws IOException {
+    private static void writeRawSpec(Path tempDir, String specDirName, String content) throws IOException {
         Path specDir = tempDir.resolve("dependency-specs").resolve(specDirName).resolve("asyncapi");
         Files.createDirectories(specDir);
-        Files.writeString(
-                specDir.resolve("asyncapi.yml"),
+        Files.writeString(specDir.resolve("asyncapi.yml"), content);
+    }
+
+    private static void writeSpec(Path tempDir, String specDirName, String title, String messageKey, String messageName)
+            throws IOException {
+        writeRawSpec(
+                tempDir,
+                specDirName,
                 SPEC_TEMPLATE.formatted(
                         title, messageKey, messageName, messageName, messageKey, messageName, messageName));
     }
