@@ -1,8 +1,6 @@
-name: Publish BOM to GitHub Packages
+name: Promote to Maven Central
 
 on:
-  push:
-    branches: [ main ]
   workflow_dispatch:
 
 env:
@@ -12,8 +10,7 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
-      packages: write
+      contents: read
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -30,9 +27,9 @@ jobs:
           settings-servers: |
             [
               {
-                "id": "github",
-                "username": "${{ github.actor }}",
-                "password": "${{ secrets.GITHUB_TOKEN }}"
+                "id": "central",
+                "username": "${{ secrets.SONATYPE_USERNAME }}",
+                "password": "${{ secrets.SONATYPE_PASSWORD }}"
               }
             ]
 
@@ -42,6 +39,12 @@ jobs:
           path: ~/.m2
           key: ${{ runner.os }}-m2-publish-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2-publish-
+
+      - name: Import GPG key
+        uses: crazy-max/ghaction-import-gpg@e89d40939c28e39f97cf32126055eeae86ba74ec # v6
+        with:
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.GPG_PASSPHRASE }}
 
       - name: Verify subproject versions match their root pom consumer properties
         run: |
@@ -67,10 +70,8 @@ jobs:
           check_version_alignment asyncapi-codegen-maven-plugin asyncapi-codegen-maven-plugin.version
 
       - name: Select unpublished projects
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Echoes the reactor selector for a project whose version is not yet in GitHub Packages; fails on any
+          # Echoes the reactor selector for a project whose version is not yet on Maven Central; fails on any
           # status other than published (200) or absent (404) rather than guessing.
           unpublished_selector() {
             local selector="$1"
@@ -88,9 +89,6 @@ jobs:
             esac
           }
 
-          VERSION=$(mvn --batch-mode -q -N help:evaluate -Dexpression=project.version -DforceStdout)
-          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
-
           PROJECTS=()
           for entry in "build-tools temporal-rift-build-tools" \
                        "asyncapi-codegen-maven-plugin asyncapi-codegen-maven-plugin" \
@@ -103,21 +101,8 @@ jobs:
           done
 
           echo "PROJECTS=$(IFS=,; echo "${PROJECTS[*]}")" >> "$GITHUB_ENV"
-          if [[ " ${PROJECTS[*]} " == *" . "* ]]; then
-            echo "VERSION_CHANGED=true" >> "$GITHUB_ENV"
-          else
-            echo "VERSION_CHANGED=false" >> "$GITHUB_ENV"
-          fi
 
       # One reactor deploy, so a BOM released together with a new plugin version builds against that plugin.
-      - name: Publish unpublished projects to GitHub Packages
+      - name: Deploy unpublished projects to Maven Central
         if: env.PROJECTS != ''
-        run: mvn --batch-mode deploy -Pgithub -pl "$PROJECTS"
-
-      - name: Create and push tag
-        if: env.VERSION_CHANGED == 'true'
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git tag v$VERSION
-          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/temporal-rift/temporal-rift-bom.git v$VERSION
+        run: mvn --batch-mode deploy -Pcentral -pl "$PROJECTS"
