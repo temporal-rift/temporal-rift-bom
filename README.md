@@ -29,9 +29,20 @@ the freshly built plugin. Each artifact keeps its own version.
 
 ## Publishing
 
-The `main`-branch publishing workflow (`publish.yml`) deploys, in one reactor build, every artifact whose version is
-not yet on Maven Central. A BOM released together with a new plugin version therefore builds against that plugin.
-Do not use local Maven publication to bridge a consumer to an unreleased BOM version.
+The `main`-branch workflow (`publish.yml`) deploys, in one reactor build, every artifact whose version is not yet
+in GitHub Packages, then tags the release. A BOM released together with a new plugin version therefore builds against
+that plugin. Do not use local Maven publication to bridge a consumer to an unreleased BOM version.
+
+Maven Central is promoted manually: run the `Promote to Maven Central` workflow (`promote-central.yml`) to deploy,
+signed and in one bundled deployment, every artifact version Central does not yet have. Nothing else publishes to
+Central.
+
+### Consuming from GitHub Packages
+
+GitHub Packages requires authentication even for public packages. Declare a `github` server with a token that has
+`read:packages` in `~/.m2/settings.xml`, and a profile adding
+`https://maven.pkg.github.com/temporal-rift/temporal-rift-bom` as both a repository and a plugin repository. In
+GitHub Actions use `GITHUB_TOKEN` with `packages: read`.
 
 ## Usage in services
 
