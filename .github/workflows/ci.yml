@@ -8,6 +8,9 @@ on:
 permissions:
   contents: read
 
+env:
+  MAVEN_VERSION: 4.0.0-rc-7
+
 jobs:
   format-check:
     runs-on: ubuntu-latest
@@ -17,12 +20,12 @@ jobs:
           persist-credentials: false
 
       - name: Setup Maven Action
-        uses: s4u/setup-maven-action@ba34de01b7f4ba2ab8e2860df8993a29f4477056 # v1.20.0
+        uses: s4u/setup-maven-action@4a02cbd99769e46198135c31d5097c94618ba3f5 # v1.21.0
         with:
           checkout-enabled: false
           java-version: 26
           java-distribution: temurin
-          maven-version: 3.9.13
+          maven-version: ${{ env.MAVEN_VERSION }}
           settings-githubServer: false
 
       - name: Cache Maven packages
@@ -32,8 +35,8 @@ jobs:
           key: ${{ runner.os }}-m2-format-check-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2-format-check-
 
-      - name: Format and Checkstyle
-        run: mvn --batch-mode -f asyncapi-codegen-maven-plugin/pom.xml validate
+      - name: Enforcer, format and Checkstyle
+        run: mvn --batch-mode validate
 
   security-snyk:
     runs-on: ubuntu-latest
@@ -42,12 +45,23 @@ jobs:
         with:
           persist-credentials: false
 
+      # The snyk/actions/maven image bundles its own Maven 3, which cannot read 4.1.0 POMs; the CLI uses this Maven.
+      - name: Setup Maven Action
+        uses: s4u/setup-maven-action@4a02cbd99769e46198135c31d5097c94618ba3f5 # v1.21.0
+        with:
+          checkout-enabled: false
+          java-version: 26
+          java-distribution: temurin
+          maven-version: ${{ env.MAVEN_VERSION }}
+          settings-githubServer: false
+
+      - name: Setup Snyk CLI
+        uses: snyk/actions/setup@12140f4059e244892ae643824a95459a102120dd # master
+
       - name: Snyk scan
-        uses: snyk/actions/maven@12140f4059e244892ae643824a95459a102120dd # master
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        with:
-          args: --file=asyncapi-codegen-maven-plugin/pom.xml --package-manager=maven --fail-on=upgradable --severity-threshold=high --org=temporal-rift
+        run: snyk test --file=asyncapi-codegen-maven-plugin/pom.xml --package-manager=maven --fail-on=upgradable --severity-threshold=high --org=temporal-rift
 
   build-test-analyze:
     needs: format-check
@@ -59,12 +73,12 @@ jobs:
           persist-credentials: false
 
       - name: Setup Maven Action
-        uses: s4u/setup-maven-action@ba34de01b7f4ba2ab8e2860df8993a29f4477056 # v1.20.0
+        uses: s4u/setup-maven-action@4a02cbd99769e46198135c31d5097c94618ba3f5 # v1.21.0
         with:
           checkout-enabled: false
           java-version: 26
           java-distribution: temurin
-          maven-version: 3.9.13
+          maven-version: ${{ env.MAVEN_VERSION }}
           settings-githubServer: false
 
       - name: Cache SonarQube packages
@@ -81,7 +95,11 @@ jobs:
           key: ${{ runner.os }}-m2-build-test-analyze-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2-build-test-analyze-
 
-      - name: Build, test and analyze
+      # The BOM's own build runs the codegen plugin built earlier in the same reactor.
+      - name: Build and test
+        run: mvn --batch-mode verify
+
+      - name: Analyze
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_PR_KEY: ${{ github.event.pull_request.number }}
@@ -96,4 +114,4 @@ jobs:
               "-Dsonar.pullrequest.base=$SONAR_PR_BASE"
             )
           fi
-          mvn --batch-mode -f asyncapi-codegen-maven-plugin/pom.xml verify sonar:sonar "${SONAR_ARGS[@]}"
+          mvn --batch-mode -pl asyncapi-codegen-maven-plugin sonar:sonar "${SONAR_ARGS[@]}"
