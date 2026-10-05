@@ -2,13 +2,22 @@ package io.github.temporalrift.asyncapi.codegen;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.project.MavenProject;
+import org.apache.maven.api.Language;
+import org.apache.maven.api.Project;
+import org.apache.maven.api.ProjectScope;
+import org.apache.maven.api.Session;
+import org.apache.maven.api.plugin.Log;
+import org.apache.maven.api.plugin.MojoException;
+import org.apache.maven.api.services.ProjectManager;
 import org.junit.jupiter.api.Test;
 
 class GenerateChannelContractMojoTest {
@@ -44,6 +53,10 @@ class GenerateChannelContractMojoTest {
                     required: [ gameId ]
             """;
 
+    private final Project project = mock(Project.class);
+    private final ProjectManager projectManager = mock(ProjectManager.class);
+    private final Session session = mock(Session.class);
+
     @Test
     void rejectsTwoDifferentSpecFilesWithTheIdenticalTitle(@org.junit.jupiter.api.io.TempDir Path tempDir)
             throws IOException {
@@ -53,13 +66,10 @@ class GenerateChannelContractMojoTest {
         writeSpec(tempDir, "first-spec", "Shared Title", "thingOne", "ThingOne");
         writeSpec(tempDir, "second-spec", "Shared Title", "thingTwo", "ThingTwo");
 
-        GenerateChannelContractMojo mojo = new GenerateChannelContractMojo();
-        mojo.project = new MavenProject();
-        mojo.dependencySpecsDirectory = tempDir.resolve("dependency-specs").toString();
-        mojo.outputDirectory = tempDir.resolve("generated-sources").toString();
+        GenerateChannelContractMojo mojo = mojoFor(tempDir);
 
         assertThatThrownBy(mojo::execute)
-                .isInstanceOf(MojoExecutionException.class)
+                .isInstanceOf(MojoException.class)
                 .hasMessageContaining("first-spec")
                 .hasMessageContaining("second-spec")
                 .hasMessageContaining("GeneratedChannelContract.java");
@@ -71,10 +81,7 @@ class GenerateChannelContractMojoTest {
         writeSpec(tempDir, "first-spec", "First Title", "thingOne", "ThingOne");
         writeSpec(tempDir, "second-spec", "Second Title", "thingTwo", "ThingTwo");
 
-        GenerateChannelContractMojo mojo = new GenerateChannelContractMojo();
-        mojo.project = new MavenProject();
-        mojo.dependencySpecsDirectory = tempDir.resolve("dependency-specs").toString();
-        mojo.outputDirectory = tempDir.resolve("generated-sources").toString();
+        GenerateChannelContractMojo mojo = mojoFor(tempDir);
 
         mojo.execute();
 
@@ -84,6 +91,17 @@ class GenerateChannelContractMojoTest {
         assertThat(tempDir.resolve(
                         "generated-sources/io/github/temporalrift/asyncapi/secondtitle/GeneratedChannelContract.java"))
                 .exists();
+        verify(projectManager)
+                .addSourceRoot(project, ProjectScope.MAIN, Language.JAVA_FAMILY, tempDir.resolve("generated-sources"));
+    }
+
+    @Test
+    void registersNoSourceRootWhenNoSpecsWereUnpacked(@org.junit.jupiter.api.io.TempDir Path tempDir) {
+        GenerateChannelContractMojo mojo = mojoFor(tempDir);
+
+        mojo.execute();
+
+        verifyNoInteractions(projectManager);
     }
 
     @Test
@@ -142,13 +160,10 @@ class GenerateChannelContractMojoTest {
         Files.createDirectories(specDir);
         Files.writeString(specDir.resolve("asyncapi.yml"), spec);
 
-        GenerateChannelContractMojo mojo = new GenerateChannelContractMojo();
-        mojo.project = new MavenProject();
-        mojo.dependencySpecsDirectory = tempDir.resolve("dependency-specs").toString();
-        mojo.outputDirectory = tempDir.resolve("generated-sources").toString();
+        GenerateChannelContractMojo mojo = mojoFor(tempDir);
 
         assertThatThrownBy(mojo::execute)
-                .isInstanceOf(MojoExecutionException.class)
+                .isInstanceOf(MojoException.class)
                 .hasMessageContaining("GeneratedGameEventsContract.java");
     }
 
@@ -158,14 +173,20 @@ class GenerateChannelContractMojoTest {
         // "New" slugifies to "new", a Java keyword; invalid as a package name segment even though it's non-empty.
         writeSpec(tempDir, "keyword-spec", "New", "thingOne", "ThingOne");
 
-        GenerateChannelContractMojo mojo = new GenerateChannelContractMojo();
-        mojo.project = new MavenProject();
-        mojo.dependencySpecsDirectory = tempDir.resolve("dependency-specs").toString();
-        mojo.outputDirectory = tempDir.resolve("generated-sources").toString();
+        GenerateChannelContractMojo mojo = mojoFor(tempDir);
 
-        assertThatThrownBy(mojo::execute)
-                .isInstanceOf(MojoExecutionException.class)
-                .hasMessageContaining("New");
+        assertThatThrownBy(mojo::execute).isInstanceOf(MojoException.class).hasMessageContaining("New");
+    }
+
+    private GenerateChannelContractMojo mojoFor(Path tempDir) {
+        GenerateChannelContractMojo mojo = new GenerateChannelContractMojo();
+        mojo.log = mock(Log.class);
+        mojo.project = project;
+        mojo.session = session;
+        when(session.getService(ProjectManager.class)).thenReturn(projectManager);
+        mojo.dependencySpecsDirectory = tempDir.resolve("dependency-specs");
+        mojo.outputDirectory = tempDir.resolve("generated-sources");
+        return mojo;
     }
 
     private static void writeSpec(Path tempDir, String specDirName, String title, String messageKey, String messageName)

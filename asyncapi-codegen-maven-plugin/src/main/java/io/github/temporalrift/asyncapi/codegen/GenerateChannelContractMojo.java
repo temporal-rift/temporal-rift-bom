@@ -11,12 +11,16 @@ import java.util.List;
 import java.util.Map;
 import javax.lang.model.SourceVersion;
 
-import org.apache.maven.plugin.AbstractMojo;
-import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugins.annotations.LifecyclePhase;
-import org.apache.maven.plugins.annotations.Mojo;
-import org.apache.maven.plugins.annotations.Parameter;
-import org.apache.maven.project.MavenProject;
+import org.apache.maven.api.Language;
+import org.apache.maven.api.Project;
+import org.apache.maven.api.ProjectScope;
+import org.apache.maven.api.Session;
+import org.apache.maven.api.di.Inject;
+import org.apache.maven.api.plugin.Log;
+import org.apache.maven.api.plugin.MojoException;
+import org.apache.maven.api.plugin.annotations.Mojo;
+import org.apache.maven.api.plugin.annotations.Parameter;
+import org.apache.maven.api.services.ProjectManager;
 
 /**
  * Generates {@code GeneratedChannelContract.java} for every {@code asyncapi.yml} unpacked under
@@ -24,34 +28,39 @@ import org.apache.maven.project.MavenProject;
  * package derived from each spec's own {@code info.title}. Requires no per-service configuration: any service that
  * depends on an {@code io.github.temporal-rift:*-event} artifact gets its contract generated automatically.
  */
-@Mojo(name = "generate", defaultPhase = LifecyclePhase.GENERATE_SOURCES, threadSafe = true)
-public class GenerateChannelContractMojo extends AbstractMojo {
+@Mojo(name = "generate", defaultPhase = "generate-sources")
+public class GenerateChannelContractMojo implements org.apache.maven.api.plugin.Mojo {
 
     private static final String BASE_PACKAGE = "io.github.temporalrift.asyncapi";
 
-    @Parameter(defaultValue = "${project}", readonly = true, required = true)
-    MavenProject project;
+    @Inject
+    Log log;
+
+    @Inject
+    Project project;
+
+    @Inject
+    Session session;
 
     @Parameter(defaultValue = "${project.build.directory}/dependency-specs", readonly = true)
-    String dependencySpecsDirectory;
+    Path dependencySpecsDirectory;
 
     @Parameter(defaultValue = "${project.build.directory}/generated-sources/asyncapi-codegen", readonly = true)
-    String outputDirectory;
+    Path outputDirectory;
 
     /** Destination file already written this run, mapped to the spec file that claimed it. */
     private final Map<Path, Path> claimedDestinations = new LinkedHashMap<>();
 
     @Override
-    public void execute() throws MojoExecutionException {
-        Path specsRoot = Path.of(dependencySpecsDirectory);
-        if (!Files.isDirectory(specsRoot)) {
-            getLog().debug("No dependency-specs directory found, nothing to generate: " + specsRoot);
+    public void execute() {
+        if (!Files.isDirectory(dependencySpecsDirectory)) {
+            log.debug("No dependency-specs directory found, nothing to generate: " + dependencySpecsDirectory);
             return;
         }
 
-        List<Path> specFiles = findAsyncApiSpecs(specsRoot);
+        List<Path> specFiles = findAsyncApiSpecs(dependencySpecsDirectory);
         if (specFiles.isEmpty()) {
-            getLog().debug("No asyncapi.yml files found under " + specsRoot);
+            log.debug("No asyncapi.yml files found under " + dependencySpecsDirectory);
             return;
         }
 
@@ -60,30 +69,30 @@ public class GenerateChannelContractMojo extends AbstractMojo {
             generateFor(specFile);
         }
 
-        project.addCompileSourceRoot(outputDirectory);
+        session.getService(ProjectManager.class)
+                .addSourceRoot(project, ProjectScope.MAIN, Language.JAVA_FAMILY, outputDirectory);
     }
 
     /** Removes output from a prior incremental build so a spec removed since then doesn't leave a stale source file. */
-    private void clearPriorOutput() throws MojoExecutionException {
-        Path root = Path.of(outputDirectory);
-        if (!Files.isDirectory(root)) {
+    private void clearPriorOutput() {
+        if (!Files.isDirectory(outputDirectory)) {
             return;
         }
-        try (var paths = Files.walk(root)) {
+        try (var paths = Files.walk(outputDirectory)) {
             for (Path path : paths.sorted(Comparator.reverseOrder()).toList()) {
                 Files.delete(path);
             }
         } catch (IOException e) {
-            throw new MojoExecutionException("Failed to clear prior output at " + root, e);
+            throw new MojoException("Failed to clear prior output at " + outputDirectory, e);
         }
     }
 
-    private List<Path> findAsyncApiSpecs(Path specsRoot) throws MojoExecutionException {
+    private List<Path> findAsyncApiSpecs(Path specsRoot) {
         List<Path> found = new ArrayList<>();
         try {
             collectAsyncApiSpecs(specsRoot, found);
         } catch (IOException e) {
-            throw new MojoExecutionException("Failed to scan " + specsRoot + " for asyncapi.yml files", e);
+            throw new MojoException("Failed to scan " + specsRoot + " for asyncapi.yml files", e);
         }
         return found;
     }
@@ -100,16 +109,16 @@ public class GenerateChannelContractMojo extends AbstractMojo {
         }
     }
 
-    private void generateFor(Path specFile) throws MojoExecutionException {
+    private void generateFor(Path specFile) {
         try {
             AsyncApiDocument document = AsyncApiDocument.parse(specFile);
             String javaPackage = BASE_PACKAGE + "." + slugify(document.title(), specFile);
-            Path packageDir = Path.of(outputDirectory, javaPackage.replace('.', '/'));
+            Path packageDir = outputDirectory.resolve(javaPackage.replace('.', '/'));
             Files.createDirectories(packageDir);
 
             List<AsyncApiDocument.Channel> channels = document.channels();
             if (channels.isEmpty()) {
-                getLog().warn("Spec " + specFile + " declares no channels, nothing generated");
+                log.warn("Spec " + specFile + " declares no channels, nothing generated");
                 return;
             }
             boolean singleChannel = channels.size() == 1;
@@ -120,12 +129,14 @@ public class GenerateChannelContractMojo extends AbstractMojo {
 
                 String source = new JavaContractGenerator(document, javaPackage, className).generate(channel);
                 Files.writeString(destination, source);
-                getLog().info("Generated " + javaPackage + "." + className + " from " + specFile);
+                log.info("Generated " + javaPackage + "." + className + " from " + specFile);
             }
+        } catch (MojoException e) {
+            throw e;
         } catch (IOException e) {
-            throw new MojoExecutionException("Failed to generate contract for " + specFile, e);
+            throw new MojoException("Failed to generate contract for " + specFile, e);
         } catch (RuntimeException e) {
-            throw new MojoExecutionException("Failed to generate contract for " + specFile + ": " + e.getMessage(), e);
+            throw new MojoException("Failed to generate contract for " + specFile + ": " + e.getMessage(), e);
         }
     }
 
@@ -136,19 +147,18 @@ public class GenerateChannelContractMojo extends AbstractMojo {
      * name (e.g. "gameEvents" and "game-events" both -> GeneratedGameEventsContract). Each channel is claimed
      * exactly once per run, so there is no legitimate reason for a destination to be claimed twice.
      */
-    private void claimDestination(Path destination, Path specFile) throws MojoExecutionException {
+    private void claimDestination(Path destination, Path specFile) {
         Path previousSpecFile = claimedDestinations.putIfAbsent(destination, specFile);
         if (previousSpecFile != null) {
-            throw new MojoExecutionException(
-                    "Specs " + previousSpecFile + " and " + specFile + " both generate " + destination);
+            throw new MojoException("Specs " + previousSpecFile + " and " + specFile + " both generate " + destination);
         }
     }
 
     /** Derives a package-safe name from the spec's own {@code info.title}, e.g. "Action events" -> "actionevents". */
-    private static String slugify(String title, Path specFile) throws MojoExecutionException {
+    private static String slugify(String title, Path specFile) {
         String slug = title.replaceAll("[^A-Za-z0-9]", "").toLowerCase(java.util.Locale.ROOT);
         if (slug.isEmpty() || !SourceVersion.isName(slug)) {
-            throw new MojoExecutionException("Spec " + specFile + " has info.title \"" + title
+            throw new MojoException("Spec " + specFile + " has info.title \"" + title
                     + "\", which does not produce a valid Java package name segment (got \"" + slug + "\")");
         }
         return slug;
