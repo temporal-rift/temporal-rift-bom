@@ -114,4 +114,5 @@ jobs:
               "-Dsonar.pullrequest.base=$SONAR_PR_BASE"
             )
           fi
-          mvn --batch-mode -pl asyncapi-codegen-maven-plugin sonar:sonar "${SONAR_ARGS[@]}"
+          # -f, not -pl: Sonar needs the session's top-level project, which a -pl selection leaves unset.
+          mvn --batch-mode -f asyncapi-codegen-maven-plugin/pom.xml sonar:sonar "${SONAR_ARGS[@]}"
