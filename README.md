@@ -3,28 +3,35 @@
 Parent BOM for Temporal Rift services. Provides unified dependency management, formatting (Spotless + Palantir)
 and code quality (Checkstyle).
 
+## Requirements
+
+- JDK 26
+- Maven 4.0.0-rc-7 or newer (Maven 4 GA once released). Every POM uses model version 4.1.0, which Maven 3 cannot
+  read, and the BOM's enforcer rejects Maven 3 in every service that inherits it.
+
 ## Structure
 
 ```
 temporal-rift-bom/
-├── pom.xml             ← parent for all Temporal Rift services
-└── build-tools/
-    ├── pom.xml         ← standalone jar, built separately
-    └── src/main/resources/
-        └── checkstyle.xml
+├── pom.xml                          ← parent for all Temporal Rift services; reactor root
+├── build-tools/
+│   ├── pom.xml                      ← Checkstyle rules jar
+│   └── src/main/resources/
+│       └── checkstyle.xml
+└── asyncapi-codegen-maven-plugin/
+    └── pom.xml                      ← AsyncAPI channel-contract generator (Maven 4 plugin API)
 ```
 
-`build-tools` is intentionally **not** a Maven reactor module of the root BOM, because the root BOM's Checkstyle
-plugin depends on `build-tools` at resolution time.
-Listing it as a module would create a circular plugin dependency.
+The root POM aggregates `build-tools` and `asyncapi-codegen-maven-plugin` as `<subprojects>` but is **not** their parent:
+its own build uses both (Checkstyle rules and contract generation), so inheriting from it would be circular. The
+reactor builds them first, so a single `mvn verify` at the root builds every artifact and runs the BOM's build against
+the freshly built plugin. Each artifact keeps its own version.
 
-## Build order
+## Publishing
 
-`build-tools` must be published to Maven Central **before** the root BOM.
-The CI workflow (`publish.yml`) handles this automatically in a single job.
-
-The `main`-branch publishing workflow releases `build-tools` and the root BOM in this order. Do not use local Maven
-publication to bridge a consumer to an unreleased BOM version.
+The `main`-branch publishing workflow (`publish.yml`) deploys, in one reactor build, every artifact whose version is
+not yet on Maven Central. A BOM released together with a new plugin version therefore builds against that plugin.
+Do not use local Maven publication to bridge a consumer to an unreleased BOM version.
 
 ## Usage in services
 
@@ -33,7 +40,7 @@ publication to bridge a consumer to an unreleased BOM version.
 <parent>
     <groupId>io.github.temporal-rift</groupId>
     <artifactId>temporal-rift-bom</artifactId>
-    <version>1.14.0</version>
+    <version>2.0.0</version>
 </parent>
 ```
 
@@ -43,7 +50,7 @@ publication to bridge a consumer to an unreleased BOM version.
 |--------------------|-------------------------------------------------------------------------|
 | Formatting         | Spotless + Palantir Java Format 2.99.0                                  |
 | Code quality       | Checkstyle 14.1.0 (Google style, adapted)                               |
-| Enforcement        | Maven Enforcer (Java 26, Maven 3.9.13+)                                 |
+| Enforcement        | Maven Enforcer (Java 26, Maven 4.0.0-rc-7+)                             |
 | Coverage           | JaCoCo (managed, opt-in per service)                                    |
 | API generation     | OpenAPI Generator 7.25.0 (managed, opt-in)                              |
 | Contract resources | Generic unpacking of spec-only OpenAPI and AsyncAPI modules from `apis` |
@@ -109,4 +116,7 @@ mvn spotless:apply
 
 # Check formatting and style
 mvn validate
+
+# Build and test every artifact
+mvn verify
 ```
