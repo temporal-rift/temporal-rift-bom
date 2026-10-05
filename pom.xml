@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xmlns="http://maven.apache.org/POM/4.0.0"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
+         xmlns="http://maven.apache.org/POM/4.1.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.1.0 https://maven.apache.org/xsd/maven-4.1.0.xsd"
+         root="true">
+    <modelVersion>4.1.0</modelVersion>
 
     <parent>
         <groupId>org.springframework.boot</groupId>
@@ -13,17 +14,17 @@
 
     <groupId>io.github.temporal-rift</groupId>
     <artifactId>temporal-rift-bom</artifactId>
-    <version>1.14.0</version>
+    <version>2.0.0</version>
     <packaging>pom</packaging>
 
     <name>Temporal Rift BOM</name>
     <description>Parent BOM for Temporal Rift services — dependency management, formatting and code quality
     </description>
-    <!--
-      build-tools is NOT listed here as a module. It must be built and published
-      to GitHub Packages separately BEFORE this BOM can be built.
-      See README.md for the correct build order.
-    -->
+    <!-- Aggregated, not inherited: this POM's own build uses both, so the reactor builds them first. -->
+    <subprojects>
+        <subproject>build-tools</subproject>
+        <subproject>asyncapi-codegen-maven-plugin</subproject>
+    </subprojects>
 
     <licenses>
         <license>
@@ -86,7 +87,7 @@
         <!-- Build plugins -->
         <maven-checkstyle-plugin.version>3.6.0</maven-checkstyle-plugin.version>
         <checkstyle.version>14.1.0</checkstyle.version>
-        <spotless-maven-plugin.version>3.10.2</spotless-maven-plugin.version>
+        <spotless-maven-plugin.version>3.10.3</spotless-maven-plugin.version>
         <palantir-java-format.version>2.99.0</palantir-java-format.version>
         <maven-enforcer-plugin.version>3.6.3</maven-enforcer-plugin.version>
         <maven-compiler-plugin.version>3.16.0</maven-compiler-plugin.version>
@@ -97,7 +98,7 @@
         <central-publishing-maven-plugin.version>0.11.0</central-publishing-maven-plugin.version>
         <jacoco-maven-plugin.version>0.8.15</jacoco-maven-plugin.version>
         <openapi-generator-plugin.version>7.25.0</openapi-generator-plugin.version>
-        <asyncapi-codegen-maven-plugin.version>0.5.1</asyncapi-codegen-maven-plugin.version>
+        <asyncapi-codegen-maven-plugin.version>0.6.0</asyncapi-codegen-maven-plugin.version>
         <sonar-maven-plugin.version>5.8.0.7211</sonar-maven-plugin.version>
     </properties>
 
@@ -348,7 +349,8 @@
                                     <version>[26,)</version>
                                 </requireJavaVersion>
                                 <requireMavenVersion>
-                                    <version>[3.9.13,)</version>
+                                    <version>[4.0.0-rc-7,)</version>
+                                    <message>Maven 4.0.0-rc-7 or newer is required to build Temporal Rift projects.</message>
                                 </requireMavenVersion>
                                 <requireReleaseDeps>
                                     <onlyWhenRelease>true</onlyWhenRelease>
