@@ -5,6 +5,9 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
+env:
+  MAVEN_VERSION: 4.0.0-rc-7
+
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -18,11 +21,11 @@ jobs:
           fetch-depth: 2
 
       - name: Setup Maven Action
-        uses: s4u/setup-maven-action@ba34de01b7f4ba2ab8e2860df8993a29f4477056 # v1.20.0
+        uses: s4u/setup-maven-action@4a02cbd99769e46198135c31d5097c94618ba3f5 # v1.21.0
         with:
           java-version: 26
           java-distribution: temurin
-          maven-version: 3.9.13
+          maven-version: ${{ env.MAVEN_VERSION }}
           settings-servers: |
             [
               {
@@ -45,22 +48,22 @@ jobs:
           gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
           passphrase: ${{ secrets.GPG_PASSPHRASE }}
 
-      - name: Verify standalone module versions match their root pom consumer properties
+      - name: Verify subproject versions match their root pom consumer properties
         run: |
-          # Every standalone module (built and published independently of the reactor, then consumed back by the
-          # root pom via a "${<module>.version}" property) must have its own pom.xml <version> match that property
-          # exactly — otherwise the root pom can silently pin a version of the module that was never published, or
-          # a stale one nobody intended. Add a new check_version_alignment call here for any future standalone
-          # module that follows this pattern.
+          # Every subproject is versioned independently and consumed back by the root pom via a
+          # "${<subproject>.version}" property. Each subproject's <version> must match that property exactly —
+          # otherwise the root pom can silently pin a version of the subproject that was never published, or a
+          # stale one nobody intended. Add a new check_version_alignment call here for any future subproject that
+          # follows this pattern.
           check_version_alignment() {
-            local module_dir="$1"
+            local subproject="$1"
             local property_name="$2"
-            local module_version
-            module_version=$(mvn --batch-mode -q -f "$module_dir/pom.xml" help:evaluate -Dexpression=project.version -DforceStdout)
+            local subproject_version
+            subproject_version=$(mvn --batch-mode -q -pl "$subproject" help:evaluate -Dexpression=project.version -DforceStdout)
             local root_property_version
-            root_property_version=$(mvn --batch-mode -q help:evaluate -Dexpression="$property_name" -DforceStdout)
-            if [ "$module_version" != "$root_property_version" ]; then
-              echo "Version mismatch: root pom.xml property '$property_name' is '$root_property_version' but $module_dir/pom.xml <version> is '$module_version'" >&2
+            root_property_version=$(mvn --batch-mode -q -N help:evaluate -Dexpression="$property_name" -DforceStdout)
+            if [ "$subproject_version" != "$root_property_version" ]; then
+              echo "Version mismatch: root pom.xml property '$property_name' is '$root_property_version' but $subproject/pom.xml <version> is '$subproject_version'" >&2
               exit 1
             fi
           }
@@ -68,48 +71,51 @@ jobs:
           check_version_alignment build-tools build-tools.version
           check_version_alignment asyncapi-codegen-maven-plugin asyncapi-codegen-maven-plugin.version
 
-      - name: Check if version already published
-        id: version_check
+      - name: Select unpublished projects
         run: |
-          VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          # Echoes the reactor selector for a project whose version is not yet on Maven Central; fails on any
+          # status other than published (200) or absent (404) rather than guessing.
+          unpublished_selector() {
+            local selector="$1"
+            local artifact_id="$2"
+            local version
+            version=$(mvn --batch-mode -q -pl "$selector" help:evaluate -Dexpression=project.version -DforceStdout)
+            local status
+            status=$(curl -s -o /dev/null -w "%{http_code}" -L \
+              "https://repo1.maven.org/maven2/io/github/temporal-rift/$artifact_id/$version/$artifact_id-$version.pom")
+            echo "$artifact_id $version HTTP Status: $status" >&2
+            case "$status" in
+              200) ;;
+              404) echo "$selector" ;;
+              *) echo "Could not verify $artifact_id publication status (HTTP $status)" >&2; return 1 ;;
+            esac
+          }
 
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" -L \
-            "https://repo1.maven.org/maven2/io/github/temporal-rift/temporal-rift-bom/$VERSION/temporal-rift-bom-$VERSION.pom")
-          echo "BOM HTTP Status: $STATUS"
-          echo "VERSION_CHANGED=$( [ "$STATUS" = "200" ] && echo false || echo true )" >> $GITHUB_ENV
+          VERSION=$(mvn --batch-mode -q -N help:evaluate -Dexpression=project.version -DforceStdout)
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
 
-          BUILD_TOOLS_VERSION=$(mvn help:evaluate -f build-tools/pom.xml -Dexpression=project.version -q -DforceStdout)
-          echo "BUILD_TOOLS_VERSION=$BUILD_TOOLS_VERSION" >> $GITHUB_ENV
+          PROJECTS=()
+          for entry in "build-tools temporal-rift-build-tools" \
+                       "asyncapi-codegen-maven-plugin asyncapi-codegen-maven-plugin" \
+                       ". temporal-rift-bom"; do
+            read -r selector artifact_id <<< "$entry"
+            selected=$(unpublished_selector "$selector" "$artifact_id") || exit 1
+            if [ -n "$selected" ]; then
+              PROJECTS+=("$selected")
+            fi
+          done
 
-          BT_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -L \
-            "https://repo1.maven.org/maven2/io/github/temporal-rift/temporal-rift-build-tools/$BUILD_TOOLS_VERSION/temporal-rift-build-tools-$BUILD_TOOLS_VERSION.pom")
-          echo "build-tools HTTP Status: $BT_STATUS"
-          echo "BUILD_TOOLS_CHANGED=$( [ "$BT_STATUS" = "200" ] && echo false || echo true )" >> $GITHUB_ENV
+          echo "PROJECTS=$(IFS=,; echo "${PROJECTS[*]}")" >> "$GITHUB_ENV"
+          if [[ " ${PROJECTS[*]} " == *" . "* ]]; then
+            echo "VERSION_CHANGED=true" >> "$GITHUB_ENV"
+          else
+            echo "VERSION_CHANGED=false" >> "$GITHUB_ENV"
+          fi
 
-          CODEGEN_PLUGIN_VERSION=$(mvn help:evaluate -f asyncapi-codegen-maven-plugin/pom.xml -Dexpression=project.version -q -DforceStdout)
-          echo "CODEGEN_PLUGIN_VERSION=$CODEGEN_PLUGIN_VERSION" >> $GITHUB_ENV
-
-          CODEGEN_PLUGIN_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -L \
-            "https://repo1.maven.org/maven2/io/github/temporal-rift/asyncapi-codegen-maven-plugin/$CODEGEN_PLUGIN_VERSION/asyncapi-codegen-maven-plugin-$CODEGEN_PLUGIN_VERSION.pom")
-          echo "asyncapi-codegen-maven-plugin HTTP Status: $CODEGEN_PLUGIN_STATUS"
-          case "$CODEGEN_PLUGIN_STATUS" in
-            200) echo "CODEGEN_PLUGIN_CHANGED=false" >> "$GITHUB_ENV" ;;
-            404) echo "CODEGEN_PLUGIN_CHANGED=true" >> "$GITHUB_ENV" ;;
-            *) echo "Could not verify asyncapi-codegen-maven-plugin publication status (HTTP $CODEGEN_PLUGIN_STATUS)" >&2; exit 1 ;;
-          esac
-
-      - name: Publish build-tools to Maven Central
-        if: env.BUILD_TOOLS_CHANGED == 'true'
-        run: mvn --batch-mode -f build-tools/pom.xml deploy -Pcentral
-
-      - name: Publish asyncapi-codegen-maven-plugin to Maven Central
-        if: env.CODEGEN_PLUGIN_CHANGED == 'true'
-        run: mvn --batch-mode -f asyncapi-codegen-maven-plugin/pom.xml deploy -Pcentral
-
-      - name: Publish BOM to Maven Central
-        if: env.VERSION_CHANGED == 'true'
-        run: mvn --batch-mode deploy -Pcentral -Denforcer.skip=true
+      # One reactor deploy, so a BOM released together with a new plugin version builds against that plugin.
+      - name: Publish unpublished projects to Maven Central
+        if: env.PROJECTS != ''
+        run: mvn --batch-mode deploy -Pcentral -pl "$PROJECTS"
 
       - name: Create and push tag
         if: env.VERSION_CHANGED == 'true'
