@@ -78,8 +78,8 @@ jobs:
             local version
             version=$(mvn --batch-mode -q -pl "$selector" help:evaluate -Dexpression=project.version -DforceStdout)
             local status
-            status=$(curl -s -o /dev/null -w "%{http_code}" -L \
-              "https://repo1.maven.org/maven2/io/github/temporal-rift/$artifact_id/$version/$artifact_id-$version.pom")
+            status=$(curl -s -o /dev/null -w "%{http_code}" -L -u "x-access-token:${GITHUB_TOKEN}" \
+              "https://maven.pkg.github.com/temporal-rift/temporal-rift-bom/io/github/temporal-rift/$artifact_id/$version/$artifact_id-$version.pom")
             echo "$artifact_id $version HTTP Status: $status" >&2
             case "$status" in
               200) ;;
