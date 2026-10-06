@@ -112,13 +112,17 @@ jobs:
 
       # One reactor deploy, so a BOM released together with a new plugin version builds against that plugin.
       - name: Publish unpublished projects to GitHub Packages
-        if: env.PROJECTS != ''
+        if: env.PROJECTS != '' && github.ref == 'refs/heads/main'
         run: mvn --batch-mode deploy -Pgithub -pl "$PROJECTS"
 
       - name: Create and push tag
-        if: env.VERSION_CHANGED == 'true' && github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main'
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          if git ls-remote --exit-code --tags "https://github.com/temporal-rift/temporal-rift-bom.git" "refs/tags/v$VERSION" > /dev/null; then
+            echo "Tag v$VERSION already exists — skipping"
+            exit 0
+          fi
           git tag v$VERSION
           git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/temporal-rift/temporal-rift-bom.git v$VERSION
