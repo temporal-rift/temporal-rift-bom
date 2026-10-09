@@ -9,7 +9,7 @@
          the same reason build-tools is standalone. The root reactor builds it before the BOM. -->
     <groupId>io.github.temporal-rift</groupId>
     <artifactId>asyncapi-codegen-maven-plugin</artifactId>
-    <version>0.6.0</version>
+    <version>0.6.1</version>
     <packaging>maven-plugin</packaging>
 
     <name>Temporal Rift AsyncAPI Codegen Maven Plugin</name>
@@ -62,10 +62,10 @@
         <mockito.version>5.24.0</mockito.version>
         <jacoco-maven-plugin.version>0.8.15</jacoco-maven-plugin.version>
         <sonar-maven-plugin.version>5.8.0.7211</sonar-maven-plugin.version>
-        <spotless-maven-plugin.version>3.10.3</spotless-maven-plugin.version>
-        <palantir-java-format.version>2.99.0</palantir-java-format.version>
+        <spotless-maven-plugin.version>3.10.4</spotless-maven-plugin.version>
+        <palantir-java-format.version>2.102.0</palantir-java-format.version>
         <maven-checkstyle-plugin.version>3.6.0</maven-checkstyle-plugin.version>
-        <checkstyle.version>14.1.0</checkstyle.version>
+        <checkstyle.version>14.3.0</checkstyle.version>
         <build-tools.version>1.0.4</build-tools.version>
 
         <maven-clean-plugin.version>3.5.0</maven-clean-plugin.version>
