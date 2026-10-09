@@ -70,11 +70,11 @@
         <jackson-2-bom.version>2.22.3</jackson-2-bom.version>
         <jackson-bom.version>3.2.3</jackson-bom.version>
         <lz4-java.version>1.12.0</lz4-java.version>
-        <logback.version>1.6.3</logback.version>
+        <logback.version>1.6.5</logback.version>
         <postgresql.version>42.7.14</postgresql.version>
         <snappy-java.version>1.1.10.11</snappy-java.version>
         <tomcat.version>11.0.26</tomcat.version>
-        <zstd-jni.version>1.5.7-19</zstd-jni.version>
+        <zstd-jni.version>1.5.7-22</zstd-jni.version>
 
         <!-- Third-party -->
         <mapstruct.version>1.6.3</mapstruct.version>
@@ -85,9 +85,9 @@
 
         <!-- Build plugins -->
         <maven-checkstyle-plugin.version>3.6.0</maven-checkstyle-plugin.version>
-        <checkstyle.version>14.1.0</checkstyle.version>
-        <spotless-maven-plugin.version>3.10.3</spotless-maven-plugin.version>
-        <palantir-java-format.version>2.99.0</palantir-java-format.version>
+        <checkstyle.version>14.3.0</checkstyle.version>
+        <spotless-maven-plugin.version>3.10.4</spotless-maven-plugin.version>
+        <palantir-java-format.version>2.102.0</palantir-java-format.version>
         <maven-enforcer-plugin.version>3.6.3</maven-enforcer-plugin.version>
         <maven-compiler-plugin.version>3.16.0</maven-compiler-plugin.version>
         <maven-dependency-plugin.version>3.11.0</maven-dependency-plugin.version>
@@ -96,8 +96,8 @@
         <maven-gpg-plugin.version>3.2.8</maven-gpg-plugin.version>
         <central-publishing-maven-plugin.version>0.11.0</central-publishing-maven-plugin.version>
         <jacoco-maven-plugin.version>0.8.15</jacoco-maven-plugin.version>
-        <openapi-generator-plugin.version>7.25.0</openapi-generator-plugin.version>
-        <asyncapi-codegen-maven-plugin.version>0.6.0</asyncapi-codegen-maven-plugin.version>
+        <openapi-generator-plugin.version>7.26.0</openapi-generator-plugin.version>
+        <asyncapi-codegen-maven-plugin.version>0.6.1</asyncapi-codegen-maven-plugin.version>
         <sonar-maven-plugin.version>5.8.0.7211</sonar-maven-plugin.version>
     </properties>
 
