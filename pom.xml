@@ -14,7 +14,7 @@
 
     <groupId>io.github.temporal-rift</groupId>
     <artifactId>temporal-rift-bom</artifactId>
-    <version>2.0.0</version>
+    <version>2.0.1</version>
     <packaging>pom</packaging>
 
     <name>Temporal Rift BOM</name>
@@ -69,11 +69,10 @@
         <!-- Security version overrides (override spring-boot-starter-parent managed versions) -->
         <jackson-2-bom.version>2.22.3</jackson-2-bom.version>
         <jackson-bom.version>3.2.3</jackson-bom.version>
-        <lz4-java.version>1.11.3</lz4-java.version>
+        <lz4-java.version>1.12.0</lz4-java.version>
         <logback.version>1.6.3</logback.version>
-        <postgresql.version>42.7.13</postgresql.version>
-        <!-- Latest available release; CVE-2026-90559 remains unpatched and requires consumer rescan. -->
-        <snappy-java.version>1.1.10.8</snappy-java.version>
+        <postgresql.version>42.7.14</postgresql.version>
+        <snappy-java.version>1.1.10.11</snappy-java.version>
         <tomcat.version>11.0.26</tomcat.version>
         <zstd-jni.version>1.5.7-19</zstd-jni.version>
 
