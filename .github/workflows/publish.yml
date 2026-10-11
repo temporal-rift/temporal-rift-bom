@@ -110,10 +110,25 @@ jobs:
             echo "VERSION_CHANGED=false" >> "$GITHUB_ENV"
           fi
 
-      # One reactor deploy, so a BOM released together with a new plugin version builds against that plugin.
+      # Each unpublished project deploys in its own invocation. Selecting the root
+      # aggregator (`.`) together with subprojects in one `-pl` reactor pulls every
+      # subproject back in — including already-published ones, which GitHub Packages
+      # rejects with HTTP 409, failing the whole build before the genuinely new
+      # artifacts deploy. Subprojects go first so the root BOM's plugin executions
+      # resolve the just-published versions from the repository; the root deploys
+      # with `-N` (its pom only, no reactor).
       - name: Publish unpublished projects to GitHub Packages
         if: env.PROJECTS != '' && github.ref == 'refs/heads/main'
-        run: mvn --batch-mode deploy -Pgithub -pl "$PROJECTS"
+        run: |
+          IFS=',' read -ra SELECTORS <<< "$PROJECTS"
+          for selector in "${SELECTORS[@]}"; do
+            if [ "$selector" != "." ]; then
+              mvn --batch-mode deploy -Pgithub -pl "$selector"
+            fi
+          done
+          if [[ " ${SELECTORS[*]} " == *" . "* ]]; then
+            mvn --batch-mode deploy -Pgithub -N
+          fi
 
       - name: Create and push tag
         if: github.ref == 'refs/heads/main'
