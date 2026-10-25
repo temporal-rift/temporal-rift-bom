@@ -520,6 +520,13 @@
         </profile>
         <profile>
             <id>github</id>
+            <!-- The root build runs the codegen plugin it just deployed, which Central does not carry. -->
+            <pluginRepositories>
+                <pluginRepository>
+                    <id>github</id>
+                    <url>https://maven.pkg.github.com/temporal-rift/temporal-rift-bom</url>
+                </pluginRepository>
+            </pluginRepositories>
             <distributionManagement>
                 <repository>
                     <id>github</id>
