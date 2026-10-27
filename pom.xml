@@ -89,6 +89,7 @@
         <palantir-java-format.version>2.102.0</palantir-java-format.version>
         <maven-enforcer-plugin.version>3.6.3</maven-enforcer-plugin.version>
         <maven-compiler-plugin.version>3.16.0</maven-compiler-plugin.version>
+        <maven-antrun-plugin.version>3.2.0</maven-antrun-plugin.version>
         <maven-dependency-plugin.version>3.11.0</maven-dependency-plugin.version>
         <maven-source-plugin.version>3.4.0</maven-source-plugin.version>
         <maven-javadoc-plugin.version>3.12.0</maven-javadoc-plugin.version>
@@ -433,6 +434,38 @@
                             <includes>openapi/**,asyncapi/**</includes>
                             <useSubDirectoryPerArtifact>true</useSubDirectoryPerArtifact>
                             <outputDirectory>${project.build.directory}/dependency-specs</outputDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- The OpenAPI generator's unchanged-spec shortcut keys only on the specification. Drop its hash files
+                 whenever this pom is newer, so a changed generator setting (package, library, config options)
+                 cannot leave stale generated sources behind. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>${maven-antrun-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>invalidate-openapi-generation-on-pom-change</id>
+                        <phase>initialize</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target>
+                                <delete quiet="true">
+                                    <fileset dir="${project.build.directory}">
+                                        <include name="**/.openapi-generator/*.sha256"/>
+                                        <not>
+                                            <depend targetdir="${project.basedir}" granularity="0">
+                                                <regexpmapper from=".*" to="pom.xml"/>
+                                            </depend>
+                                        </not>
+                                    </fileset>
+                                </delete>
+                            </target>
                         </configuration>
                     </execution>
                 </executions>
