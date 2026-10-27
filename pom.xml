@@ -14,7 +14,7 @@
 
     <groupId>io.github.temporal-rift</groupId>
     <artifactId>temporal-rift-bom</artifactId>
-    <version>2.0.2</version>
+    <version>2.0.3</version>
     <packaging>pom</packaging>
 
     <name>Temporal Rift BOM</name>
@@ -96,7 +96,7 @@
         <central-publishing-maven-plugin.version>0.11.0</central-publishing-maven-plugin.version>
         <jacoco-maven-plugin.version>0.8.15</jacoco-maven-plugin.version>
         <openapi-generator-plugin.version>7.26.0</openapi-generator-plugin.version>
-        <asyncapi-codegen-maven-plugin.version>0.6.1</asyncapi-codegen-maven-plugin.version>
+        <asyncapi-codegen-maven-plugin.version>0.6.2</asyncapi-codegen-maven-plugin.version>
         <sonar-maven-plugin.version>5.8.0.7211</sonar-maven-plugin.version>
     </properties>
 

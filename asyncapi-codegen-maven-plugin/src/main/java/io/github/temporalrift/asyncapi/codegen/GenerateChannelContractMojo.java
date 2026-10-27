@@ -6,9 +6,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javax.lang.model.SourceVersion;
 
 import org.apache.maven.api.Language;
@@ -64,28 +66,102 @@ public class GenerateChannelContractMojo implements org.apache.maven.api.plugin.
             return;
         }
 
-        clearPriorOutput();
+        List<GeneratedSource> outputs = new ArrayList<>();
+        List<Path> packageDirs = new ArrayList<>();
         for (Path specFile : specFiles) {
-            generateFor(specFile);
+            render(specFile, outputs, packageDirs);
         }
+
+        writeOutput(outputs, packageDirs);
 
         session.getService(ProjectManager.class)
                 .addSourceRoot(project, ProjectScope.MAIN, Language.JAVA_FAMILY, outputDirectory);
     }
 
+    private void render(Path specFile, List<GeneratedSource> outputs, List<Path> packageDirs) {
+        try {
+            AsyncApiDocument document = AsyncApiDocument.parse(specFile);
+            String javaPackage = BASE_PACKAGE + "." + slugify(document.title(), specFile);
+            Path packageDir = outputDirectory.resolve(javaPackage.replace('.', '/'));
+            packageDirs.add(packageDir);
+
+            List<AsyncApiDocument.Channel> channels = document.channels();
+            if (channels.isEmpty()) {
+                log.warn("Spec " + specFile + " declares no channels, nothing generated");
+                return;
+            }
+            boolean singleChannel = channels.size() == 1;
+            for (AsyncApiDocument.Channel channel : channels) {
+                String className = singleChannel ? "GeneratedChannelContract" : channelClassName(channel.key());
+                Path destination = packageDir.resolve(className + ".java");
+                claimDestination(destination, specFile);
+                String source = new JavaContractGenerator(document, javaPackage, className).generate(channel);
+                outputs.add(new GeneratedSource(destination, specFile, source));
+            }
+        } catch (MojoException e) {
+            throw e;
+        } catch (IOException e) {
+            throw new MojoException("Failed to generate contract for " + specFile, e);
+        } catch (RuntimeException e) {
+            throw new MojoException("Failed to generate contract for " + specFile + ": " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Writes only files whose content changed, then removes output no current spec produces. Leaving unchanged files
+     * untouched keeps their timestamps stable, so Maven's incremental compile can skip this module.
+     */
+    private void writeOutput(List<GeneratedSource> outputs, List<Path> packageDirs) {
+        try {
+            for (Path packageDir : packageDirs) {
+                Files.createDirectories(packageDir);
+            }
+            Set<Path> expectedSources = new HashSet<>();
+            for (GeneratedSource output : outputs) {
+                expectedSources.add(output.destination());
+                if (Files.exists(output.destination())
+                        && Files.readString(output.destination()).equals(output.source())) {
+                    log.debug("Unchanged " + output.destination());
+                    continue;
+                }
+                Files.writeString(output.destination(), output.source());
+                log.info("Generated " + output.destination() + " from " + output.specFile());
+            }
+            removeStaleOutput(expectedSources, packageDirs);
+        } catch (IOException e) {
+            throw new MojoException("Failed to write generated contracts under " + outputDirectory, e);
+        }
+    }
+
     /** Removes output from a prior incremental build so a spec removed since then doesn't leave a stale source file. */
-    private void clearPriorOutput() {
+    private void removeStaleOutput(Set<Path> expectedSources, List<Path> packageDirs) throws IOException {
         if (!Files.isDirectory(outputDirectory)) {
             return;
         }
+        Set<Path> keepDirectories = Set.copyOf(packageDirs);
         try (var paths = Files.walk(outputDirectory)) {
             for (Path path : paths.sorted(Comparator.reverseOrder()).toList()) {
-                Files.delete(path);
+                if (path.equals(outputDirectory)) {
+                    continue;
+                }
+                if (Files.isDirectory(path)) {
+                    if (!keepDirectories.contains(path) && isEmptyDirectory(path)) {
+                        Files.delete(path);
+                    }
+                } else if (!expectedSources.contains(path)) {
+                    Files.delete(path);
+                }
             }
-        } catch (IOException e) {
-            throw new MojoException("Failed to clear prior output at " + outputDirectory, e);
         }
     }
+
+    private static boolean isEmptyDirectory(Path directory) throws IOException {
+        try (var entries = Files.list(directory)) {
+            return entries.findAny().isEmpty();
+        }
+    }
+
+    private record GeneratedSource(Path destination, Path specFile, String source) {}
 
     private List<Path> findAsyncApiSpecs(Path specsRoot) {
         List<Path> found = new ArrayList<>();
@@ -106,37 +182,6 @@ public class GenerateChannelContractMojo implements org.apache.maven.api.plugin.
                     found.add(entry);
                 }
             }
-        }
-    }
-
-    private void generateFor(Path specFile) {
-        try {
-            AsyncApiDocument document = AsyncApiDocument.parse(specFile);
-            String javaPackage = BASE_PACKAGE + "." + slugify(document.title(), specFile);
-            Path packageDir = outputDirectory.resolve(javaPackage.replace('.', '/'));
-            Files.createDirectories(packageDir);
-
-            List<AsyncApiDocument.Channel> channels = document.channels();
-            if (channels.isEmpty()) {
-                log.warn("Spec " + specFile + " declares no channels, nothing generated");
-                return;
-            }
-            boolean singleChannel = channels.size() == 1;
-            for (AsyncApiDocument.Channel channel : channels) {
-                String className = singleChannel ? "GeneratedChannelContract" : channelClassName(channel.key());
-                Path destination = packageDir.resolve(className + ".java");
-                claimDestination(destination, specFile);
-
-                String source = new JavaContractGenerator(document, javaPackage, className).generate(channel);
-                Files.writeString(destination, source);
-                log.info("Generated " + javaPackage + "." + className + " from " + specFile);
-            }
-        } catch (MojoException e) {
-            throw e;
-        } catch (IOException e) {
-            throw new MojoException("Failed to generate contract for " + specFile, e);
-        } catch (RuntimeException e) {
-            throw new MojoException("Failed to generate contract for " + specFile + ": " + e.getMessage(), e);
         }
     }
 
