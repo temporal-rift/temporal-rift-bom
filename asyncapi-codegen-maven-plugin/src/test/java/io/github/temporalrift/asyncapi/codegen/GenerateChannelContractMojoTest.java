@@ -11,6 +11,8 @@ import static org.mockito.Mockito.when;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.FileTime;
+import java.time.Instant;
 
 import org.apache.maven.api.Language;
 import org.apache.maven.api.Project;
@@ -192,6 +194,20 @@ class GenerateChannelContractMojoTest {
         assertThat(tempDir.resolve(
                         "generated-sources/io/github/temporalrift/asyncapi/firsttitle/GeneratedChannelContract.java"))
                 .exists();
+    }
+
+    @Test
+    void leavesUnchangedOutputUntouched(@org.junit.jupiter.api.io.TempDir Path tempDir) throws IOException {
+        writeSpec(tempDir, "first-spec", "First Title", "thingOne", "ThingOne");
+        mojoFor(tempDir).execute();
+        Path generated = tempDir.resolve(
+                "generated-sources/io/github/temporalrift/asyncapi/firsttitle/GeneratedChannelContract.java");
+        FileTime untouched = FileTime.from(Instant.parse("2020-01-01T00:00:00Z"));
+        Files.setLastModifiedTime(generated, untouched);
+
+        mojoFor(tempDir).execute();
+
+        assertThat(Files.getLastModifiedTime(generated)).isEqualTo(untouched);
     }
 
     @Test
