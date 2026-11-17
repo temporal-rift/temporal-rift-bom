@@ -131,3 +131,18 @@ mvn validate
 # Build and test every artifact
 mvn verify
 ```
+
+## Mutation testing
+
+PIT is managed here but deliberately not bound to any lifecycle phase: mutation testing is far too slow for every
+build or CI run. Each service narrows it to its `domain` and `application` packages and runs it on demand:
+
+```bash
+# from a service repository
+mvn test-compile pitest:mutationCoverage
+```
+
+Reports are written to `target/pit-reports` (`index.html` for humans, `mutations.xml` for tooling). The quality gates
+are defined once here — `pitest.mutationThreshold` for the mutation score and `pitest.coverageThreshold` for line
+coverage of the mutated classes. Override either with a system property for an exploratory run, for example
+`-Dpitest.mutationThreshold=0`.
