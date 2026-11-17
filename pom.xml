@@ -279,11 +279,8 @@
                     </executions>
                 </plugin>
 
-                <!-- Mutation testing. No <executions>: PIT is far too slow for the build or CI lifecycle, so
-                     each service activates this plugin and runs
-                     `mvn test-compile pitest:mutationCoverage` on demand. JUnit 5 discovery comes from the
-                     plugin dependency below; the shared defaults keep reports stable and comparable across
-                     services, and each service narrows targetClasses/targetTests to its own code. -->
+                <!-- Services declare this plugin and set targetClasses/targetTests; run it with
+                     `mvn test-compile pitest:mutationCoverage`. -->
                 <plugin>
                     <groupId>org.pitest</groupId>
                     <artifactId>pitest-maven</artifactId>
