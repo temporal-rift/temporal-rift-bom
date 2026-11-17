@@ -279,8 +279,9 @@
                     </executions>
                 </plugin>
 
-                <!-- Services declare this plugin and set targetClasses/targetTests; run it with
-                     `mvn test-compile pitest:mutationCoverage`. -->
+                <!-- Services: declare this plugin, set targetClasses/targetTests, and run
+                     `mvn test-compile pitest:mutationCoverage`. Extend the shared exclusions with
+                     `excludedClasses` or `<excludedTestClasses combine.children="append">`. -->
                 <plugin>
                     <groupId>org.pitest</groupId>
                     <artifactId>pitest-maven</artifactId>
