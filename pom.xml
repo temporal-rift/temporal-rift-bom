@@ -14,7 +14,7 @@
 
     <groupId>io.github.temporal-rift</groupId>
     <artifactId>temporal-rift-bom</artifactId>
-    <version>2.0.5</version>
+    <version>2.1.0</version>
     <packaging>pom</packaging>
 
     <name>Temporal Rift BOM</name>
@@ -97,9 +97,15 @@
         <maven-gpg-plugin.version>3.2.8</maven-gpg-plugin.version>
         <central-publishing-maven-plugin.version>0.11.0</central-publishing-maven-plugin.version>
         <jacoco-maven-plugin.version>0.8.15</jacoco-maven-plugin.version>
+        <pitest-maven-plugin.version>1.30.2</pitest-maven-plugin.version>
+        <pitest-junit5-plugin.version>1.2.3</pitest-junit5-plugin.version>
         <openapi-generator-plugin.version>7.26.0</openapi-generator-plugin.version>
         <asyncapi-codegen-maven-plugin.version>0.6.3</asyncapi-codegen-maven-plugin.version>
         <sonar-maven-plugin.version>5.8.0.7211</sonar-maven-plugin.version>
+
+        <pitest.threads>4</pitest.threads>
+        <pitest.mutationThreshold>80</pitest.mutationThreshold>
+        <pitest.coverageThreshold>95</pitest.coverageThreshold>
     </properties>
 
     <dependencyManagement>
@@ -271,6 +277,42 @@
                             </configuration>
                         </execution>
                     </executions>
+                </plugin>
+
+                <!-- Services: declare this plugin, set targetClasses/targetTests, and run
+                     `mvn test-compile pitest:mutationCoverage`. Extend the shared exclusions with
+                     `excludedClasses` or `<excludedTestClasses combine.children="append">`. -->
+                <plugin>
+                    <groupId>org.pitest</groupId>
+                    <artifactId>pitest-maven</artifactId>
+                    <version>${pitest-maven-plugin.version}</version>
+                    <dependencies>
+                        <dependency>
+                            <groupId>org.pitest</groupId>
+                            <artifactId>pitest-junit5-plugin</artifactId>
+                            <version>${pitest-junit5-plugin.version}</version>
+                        </dependency>
+                    </dependencies>
+                    <configuration>
+                        <threads>${pitest.threads}</threads>
+                        <mutators>
+                            <mutator>DEFAULTS</mutator>
+                        </mutators>
+                        <outputFormats>
+                            <param>HTML</param>
+                            <param>XML</param>
+                        </outputFormats>
+                        <timestampedReports>false</timestampedReports>
+                        <reportsDirectory>${project.build.directory}/pit-reports</reportsDirectory>
+                        <mutationThreshold>${pitest.mutationThreshold}</mutationThreshold>
+                        <coverageThreshold>${pitest.coverageThreshold}</coverageThreshold>
+                        <!-- Container-backed tests belong to Failsafe; PIT runs the unit suite only. -->
+                        <excludedTestClasses>
+                            <param>*IT</param>
+                            <param>*IntegrationTest</param>
+                            <param>*ArchitectureTest</param>
+                        </excludedTestClasses>
+                    </configuration>
                 </plugin>
 
                 <!-- No <executions> — services invoke this by its bare "sonar" CLI prefix

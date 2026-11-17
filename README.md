@@ -51,7 +51,7 @@ GitHub Actions use `GITHUB_TOKEN` with `packages: read`.
 <parent>
     <groupId>io.github.temporal-rift</groupId>
     <artifactId>temporal-rift-bom</artifactId>
-    <version>2.0.5</version>
+    <version>2.1.0</version>
 </parent>
 ```
 
@@ -130,4 +130,49 @@ mvn validate
 
 # Build and test every artifact
 mvn verify
+```
+
+## Mutation testing
+
+PIT is managed here and not bound to any lifecycle phase. A service opts in by declaring the plugin and narrowing the
+scope:
+
+```xml
+<plugin>
+    <groupId>org.pitest</groupId>
+    <artifactId>pitest-maven</artifactId>
+    <configuration>
+        <targetClasses>
+            <param>com.example.*.domain.*</param>
+            <param>com.example.*.application.*</param>
+        </targetClasses>
+        <targetTests>
+            <param>com.example.*.domain.*</param>
+            <param>com.example.*.application.*</param>
+        </targetTests>
+    </configuration>
+</plugin>
+```
+
+```bash
+mvn test-compile pitest:mutationCoverage
+```
+
+Reports are written to `target/pit-reports` (`index.html` for humans, `mutations.xml` for tooling). The gates are
+defined once here: `pitest.mutationThreshold` for the mutation score and `pitest.coverageThreshold` for line coverage
+of the mutated classes. Override either with a system property for an exploratory run, for example
+`-Dpitest.mutationThreshold=0`.
+
+Service-specific exclusions keep the shared ones:
+
+```xml
+<!-- production classes -->
+<excludedClasses>
+    <param>com.example.domain.Generated*</param>
+</excludedClasses>
+
+<!-- test classes; appended to the shared *IT, *IntegrationTest and *ArchitectureTest -->
+<excludedTestClasses combine.children="append">
+    <param>com.example.domain.SlowTest</param>
+</excludedTestClasses>
 ```
