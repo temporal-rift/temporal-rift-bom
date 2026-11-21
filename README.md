@@ -1,7 +1,7 @@
 # temporal-rift-bom
 
-Parent BOM for Temporal Rift services. Provides unified dependency management, formatting (Spotless + Palantir)
-and code quality (Checkstyle).
+Parent BOM for Temporal Rift services. Provides unified dependency management, formatting (Spotless + Open Java
+Format) and code quality (Checkstyle).
 
 ## Requirements
 
@@ -51,7 +51,7 @@ GitHub Actions use `GITHUB_TOKEN` with `packages: read`.
 <parent>
     <groupId>io.github.temporal-rift</groupId>
     <artifactId>temporal-rift-bom</artifactId>
-    <version>2.1.0</version>
+    <version>2.2.0</version>
 </parent>
 ```
 
@@ -59,7 +59,7 @@ GitHub Actions use `GITHUB_TOKEN` with `packages: read`.
 
 | Category           | Plugin / Dependency                                                     |
 |--------------------|-------------------------------------------------------------------------|
-| Formatting         | Spotless + Palantir Java Format 2.99.0                                  |
+| Formatting         | Spotless + Open Java Format 21.0.2                                      |
 | Code quality       | Checkstyle 14.1.0 (Google style, adapted)                               |
 | Enforcement        | Maven Enforcer (Java 26, Maven 4.0.0-rc-7+)                             |
 | Coverage           | JaCoCo (managed, opt-in per service)                                    |

@@ -62,8 +62,8 @@
         <mockito.version>5.24.0</mockito.version>
         <jacoco-maven-plugin.version>0.8.15</jacoco-maven-plugin.version>
         <sonar-maven-plugin.version>5.8.0.7211</sonar-maven-plugin.version>
-        <spotless-maven-plugin.version>3.10.4</spotless-maven-plugin.version>
-        <palantir-java-format.version>2.102.0</palantir-java-format.version>
+        <spotless-maven-plugin.version>3.12.0</spotless-maven-plugin.version>
+        <open-java-format.version>21.0.2</open-java-format.version>
         <maven-checkstyle-plugin.version>3.6.0</maven-checkstyle-plugin.version>
         <checkstyle.version>14.3.0</checkstyle.version>
         <build-tools.version>1.0.4</build-tools.version>
@@ -235,8 +235,9 @@
                             <include>src/test/java/**/*.java</include>
                         </includes>
                         <palantirJavaFormat>
-                            <version>${palantir-java-format.version}</version>
-                            <style>PALANTIR</style>
+                            <groupArtifact>dev.openjavaformat:open-java-format</groupArtifact>
+                            <version>${open-java-format.version}</version>
+                            <style>OJF</style>
                             <formatJavadoc>false</formatJavadoc>
                         </palantirJavaFormat>
                         <importOrder>
