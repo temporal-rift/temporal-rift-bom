@@ -22,6 +22,7 @@ import org.apache.maven.api.plugin.Log;
 import org.apache.maven.api.plugin.MojoException;
 import org.apache.maven.api.services.ProjectManager;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 class GenerateChannelContractMojoTest {
 
@@ -61,8 +62,7 @@ class GenerateChannelContractMojoTest {
     private final Session session = mock(Session.class);
 
     @Test
-    void rejectsTwoDifferentSpecFilesWithTheIdenticalTitle(@org.junit.jupiter.api.io.TempDir Path tempDir)
-            throws IOException {
+    void rejectsTwoDifferentSpecFilesWithTheIdenticalTitle(@TempDir Path tempDir) throws IOException {
         // Two unrelated specs that happen to share the exact same info.title — not just a slug collision from
         // differently-punctuated titles, the literal same title string, which the naive putIfAbsent-on-title-map
         // approach would treat as "already seen, fine" and let silently overwrite.
@@ -79,8 +79,7 @@ class GenerateChannelContractMojoTest {
     }
 
     @Test
-    void generatesDistinctPackagesForSpecsWithDifferentTitles(@org.junit.jupiter.api.io.TempDir Path tempDir)
-            throws Exception {
+    void generatesDistinctPackagesForSpecsWithDifferentTitles(@TempDir Path tempDir) throws Exception {
         writeSpec(tempDir, "first-spec", "First Title", "thingOne", "ThingOne");
         writeSpec(tempDir, "second-spec", "Second Title", "thingTwo", "ThingTwo");
 
@@ -99,7 +98,7 @@ class GenerateChannelContractMojoTest {
     }
 
     @Test
-    void registersNoSourceRootWhenNoSpecsWereUnpacked(@org.junit.jupiter.api.io.TempDir Path tempDir) {
+    void registersNoSourceRootWhenNoSpecsWereUnpacked(@TempDir Path tempDir) {
         GenerateChannelContractMojo mojo = mojoFor(tempDir);
 
         mojo.execute();
@@ -108,8 +107,7 @@ class GenerateChannelContractMojoTest {
     }
 
     @Test
-    void rejectsTwoChannelsInTheSameSpecProducingTheSameClassName(@org.junit.jupiter.api.io.TempDir Path tempDir)
-            throws IOException {
+    void rejectsTwoChannelsInTheSameSpecProducingTheSameClassName(@TempDir Path tempDir) throws IOException {
         // "gameEvents" and "game-events" both strip down to the same javaName, so both channels resolve to
         // GeneratedGameEventsContract - the same specFile exemption previously let the second overwrite the first.
         String spec = """
@@ -171,8 +169,7 @@ class GenerateChannelContractMojoTest {
     }
 
     @Test
-    void rejectsATitleWhoseSlugIsNotAValidJavaIdentifier(@org.junit.jupiter.api.io.TempDir Path tempDir)
-            throws IOException {
+    void rejectsATitleWhoseSlugIsNotAValidJavaIdentifier(@TempDir Path tempDir) throws IOException {
         // "New" slugifies to "new", a Java keyword; invalid as a package name segment even though it's non-empty.
         writeSpec(tempDir, "keyword-spec", "New", "thingOne", "ThingOne");
 
@@ -182,7 +179,7 @@ class GenerateChannelContractMojoTest {
     }
 
     @Test
-    void removesOutputLeftByAPriorRun(@org.junit.jupiter.api.io.TempDir Path tempDir) throws IOException {
+    void removesOutputLeftByAPriorRun(@TempDir Path tempDir) throws IOException {
         Path staleSource = tempDir.resolve("generated-sources/io/github/temporalrift/asyncapi/removed/Stale.java");
         Files.createDirectories(staleSource.getParent());
         Files.writeString(staleSource, "class Stale {}");
@@ -197,7 +194,7 @@ class GenerateChannelContractMojoTest {
     }
 
     @Test
-    void leavesUnchangedOutputUntouched(@org.junit.jupiter.api.io.TempDir Path tempDir) throws IOException {
+    void leavesUnchangedOutputUntouched(@TempDir Path tempDir) throws IOException {
         writeSpec(tempDir, "first-spec", "First Title", "thingOne", "ThingOne");
         mojoFor(tempDir).execute();
         Path generated = tempDir.resolve(
@@ -211,8 +208,7 @@ class GenerateChannelContractMojoTest {
     }
 
     @Test
-    void registersNoSourceRootWhenTheUnpackedSpecsHoldNoAsyncApiDocument(@org.junit.jupiter.api.io.TempDir Path tempDir)
-            throws IOException {
+    void registersNoSourceRootWhenTheUnpackedSpecsHoldNoAsyncApiDocument(@TempDir Path tempDir) throws IOException {
         Path openApiDir = tempDir.resolve("dependency-specs/session-api/openapi/v1");
         Files.createDirectories(openApiDir);
         Files.writeString(openApiDir.resolve("session.yml"), "openapi: 3.1.0");
@@ -224,7 +220,7 @@ class GenerateChannelContractMojoTest {
     }
 
     @Test
-    void generatesNothingForASpecWithoutChannels(@org.junit.jupiter.api.io.TempDir Path tempDir) throws IOException {
+    void generatesNothingForASpecWithoutChannels(@TempDir Path tempDir) throws IOException {
         writeRawSpec(tempDir, "empty-spec", """
                 asyncapi: 3.0.0
                 info:
@@ -241,7 +237,7 @@ class GenerateChannelContractMojoTest {
     }
 
     @Test
-    void rejectsASpecThatIsNotValidYaml(@org.junit.jupiter.api.io.TempDir Path tempDir) throws IOException {
+    void rejectsASpecThatIsNotValidYaml(@TempDir Path tempDir) throws IOException {
         writeRawSpec(tempDir, "malformed-spec", "info: [unclosed");
 
         assertThatThrownBy(mojoFor(tempDir)::execute)
@@ -251,7 +247,7 @@ class GenerateChannelContractMojoTest {
     }
 
     @Test
-    void reportsTheSpecWhoseSchemaCannotBeGenerated(@org.junit.jupiter.api.io.TempDir Path tempDir) throws Exception {
+    void reportsTheSpecWhoseSchemaCannotBeGenerated(@TempDir Path tempDir) throws Exception {
         Path fixture = Path.of(GenerateChannelContractMojoTest.class
                 .getResource("/fixtures/unsupported-schema-shape/asyncapi.yml")
                 .toURI());
