@@ -11,6 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Stream;
 import javax.tools.JavaCompiler;
 import javax.tools.StandardJavaFileManager;
@@ -299,7 +300,7 @@ class JavaContractGeneratorTest {
                         List.class,
                         Class.forName(contract.getName() + "$Kind", true, contract.getClassLoader()))
                 .newInstance(
-                        List.of(java.util.UUID.randomUUID()),
+                        List.of(UUID.randomUUID()),
                         "AB",
                         1,
                         1.0,
@@ -314,7 +315,7 @@ class JavaContractGeneratorTest {
                         null,
                         null);
         Object invalidMetadata = metadataType.getDeclaredConstructor(int.class).newInstance(0);
-        java.util.UUID duplicateId = java.util.UUID.randomUUID();
+        UUID duplicateId = UUID.randomUUID();
         Object invalidPayload = payloadType
                 .getDeclaredConstructor(
                         List.class,

@@ -9,6 +9,7 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import javax.lang.model.SourceVersion;
@@ -201,7 +202,7 @@ public class GenerateChannelContractMojo implements org.apache.maven.api.plugin.
 
     /** Derives a package-safe name from the spec's own {@code info.title}, e.g. "Action events" -> "actionevents". */
     private static String slugify(String title, Path specFile) {
-        String slug = title.replaceAll("[^A-Za-z0-9]", "").toLowerCase(java.util.Locale.ROOT);
+        String slug = title.replaceAll("[^A-Za-z0-9]", "").toLowerCase(Locale.ROOT);
         if (slug.isEmpty() || !SourceVersion.isName(slug)) {
             throw new MojoException("Spec " + specFile + " has info.title \"" + title
                     + "\", which does not produce a valid Java package name segment (got \"" + slug + "\")");
